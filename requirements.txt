@@ -5,5 +5,3 @@ pandas
 plotly
 openpyxl
 numpy
-sklearn
-xgboost
