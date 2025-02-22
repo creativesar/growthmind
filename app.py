@@ -2,8 +2,6 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
 from io import BytesIO
 import numpy as np
 
@@ -12,45 +10,21 @@ st.set_page_config(page_title="📊 Financial Data Sweeper", layout="wide", page
 st.title("🚀 Financial Data Sweeper")
 
 # Custom Styling for enhanced UI/UX
-st.markdown(
-    """
-    <style>
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        @keyframes glow {
-            0% { box-shadow: 0 0 5px #00C9A7; }
-            50% { box-shadow: 0 0 20px #FF4B2B; }
-            100% { box-shadow: 0 0 5px #00C9A7; }
-        }
-        body { font-family: 'Inter', sans-serif; }
-        .stApp { background: linear-gradient(to right, #0f0c29, #302b63, #24243e); color: white; }
-        .stButton>button { 
-            background: linear-gradient(to right, #ff416c, #ff4b2b); 
-            color: white; 
-            border-radius: 12px; 
-            padding: 12px 24px; 
-            font-size: 16px; 
-            transition: 0.3s ease-in-out; 
-            animation: glow 2s infinite, pop 0.5s ease-in-out; 
-        }
-        .stButton>button:hover { transform: scale(1.1); }
-        .stSidebar { 
-            background: rgba(255, 255, 255, 0.1); 
-            backdrop-filter: blur(10px); 
-            padding: 20px; 
-            border-radius: 12px; 
-            box-shadow: 2px 2px 12px rgba(0,0,0,0.1); 
-            animation: fadeIn 1s ease-in-out; 
-        }
-        .stHeader { color: white; font-size: 2.5rem; font-weight: bold; animation: float 3s infinite; }
-        .stDataFrame { background: rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 10px; }
-        .stExpander { background: rgba(255, 255, 255, 0.1); border-radius: 12px; }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+def apply_theme(theme):
+    if theme == "Dark":
+        return """
+            <style>
+                body { background: linear-gradient(to right, #0f0c29, #302b63, #24243e); color: white; }
+                .footer { color: white; }
+            </style>
+        """
+    elif theme == "Light":
+        return """
+            <style>
+                body { background: linear-gradient(to right, #ffffff, #f0f8ff); color: black; }
+                .footer { color: black; }
+            </style>
+        """
 
 # Sidebar - File uploader and theme switcher
 st.sidebar.header("📂 Upload Financial Data")
@@ -61,12 +35,8 @@ uploaded_file = st.sidebar.file_uploader(
 )
 theme = st.sidebar.radio("🎨 Select Theme", ["Dark", "Light"])
 
-if theme == "Light":
-    st.markdown("""
-        <style>
-            .stApp { background: linear-gradient(to right, #ffffff, #f0f8ff); color: black; }
-        </style>
-    """, unsafe_allow_html=True)
+# Apply theme-specific styling
+st.markdown(apply_theme(theme), unsafe_allow_html=True)
 
 # Function to load data from file
 def load_data(file):
@@ -190,25 +160,6 @@ if uploaded_file:
                 )
                 st.plotly_chart(fig, use_container_width=True)
         
-        # AI-Powered Insights
-        st.subheader("🤖 AI-Powered Insights")
-        if len(numeric_columns) > 1:
-            kmeans_clusters = st.slider("Number of Clusters for K-Means", 2, 10, 3)
-            scaler = StandardScaler()
-            scaled_data = scaler.fit_transform(filtered_df[numeric_columns])
-            kmeans = KMeans(n_clusters=kmeans_clusters, random_state=42)
-            filtered_df["Cluster"] = kmeans.fit_predict(scaled_data)
-            
-            fig = px.scatter_matrix(
-                filtered_df,
-                dimensions=numeric_columns,
-                color="Cluster",
-                title="K-Means Clustering",
-                template="plotly_dark",
-                color_continuous_scale="viridis"
-            )
-            st.plotly_chart(fig, use_container_width=True)
-        
         # Download cleaned data
         export_format = st.selectbox("📤 Select export format", ["CSV", "Excel"])
         export_data = convert_df(filtered_df, format=export_format.lower())
@@ -228,9 +179,9 @@ else:
 # Add a futuristic footer
 st.markdown(
     """
-    <div style="text-align: center; padding: 20px; background: rgba(255, 255, 255, 0.1); border-radius: 12px; margin-top: 20px;">
-        <h3 style="color: white; animation: float 3s infinite;">Developed By Sarfraz</h3>
-        <p style="color: white;">Explore the future of financial data analysis!</p>
+    <div class="footer" style="text-align: center; padding: 20px; background: rgba(255, 255, 255, 0.1); border-radius: 12px; margin-top: 20px;">
+        <h3 style="animation: float 3s infinite;">Developed By Sarfraz</h3>
+        <p>Explore the future of financial data analysis!</p>
     </div>
     """,
     unsafe_allow_html=True,
