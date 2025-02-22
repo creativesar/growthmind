@@ -2,8 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
+import time
 from io import BytesIO
 import numpy as np
 
@@ -23,6 +22,11 @@ st.markdown(
             0% { box-shadow: 0 0 5px #00C9A7; }
             50% { box-shadow: 0 0 20px #FF4B2B; }
             100% { box-shadow: 0 0 5px #00C9A7; }
+        }
+        @keyframes float {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0); }
         }
         body { font-family: 'Inter', sans-serif; }
         .stApp { background: linear-gradient(to right, #0f0c29, #302b63, #24243e); color: white; }
@@ -68,6 +72,11 @@ if theme == "Light":
         </style>
     """, unsafe_allow_html=True)
 
+if uploaded_file:
+    st.sidebar.success("✅ File uploaded!")
+else:
+    st.sidebar.info("Awaiting file upload...")
+
 # Function to load data from file
 def load_data(file):
     """Load data from uploaded CSV or Excel file."""
@@ -105,6 +114,7 @@ if uploaded_file:
     try:
         with st.spinner("🚀 Processing file..."):
             df = load_data(uploaded_file)  # Load data
+            time.sleep(1)
         
         st.success("🎉 File successfully uploaded!")
         
@@ -137,19 +147,6 @@ if uploaded_file:
             fig = px.imshow(corr_matrix, text_auto=True, title="Correlation Heatmap", template="plotly_dark", color_continuous_scale="viridis")
             st.plotly_chart(fig, use_container_width=True)
         
-        # Interactive Filters
-        st.subheader("🔍 Interactive Filters")
-        filter_column = st.selectbox("Select a column to filter", df_cleaned.columns)
-        if df_cleaned[filter_column].dtype in [np.int64, np.float64]:
-            min_val, max_val = st.slider(f"Filter {filter_column} range", float(df_cleaned[filter_column].min()), float(df_cleaned[filter_column].max()), (float(df_cleaned[filter_column].min()), float(df_cleaned[filter_column].max())))
-            filtered_df = df_cleaned[(df_cleaned[filter_column] >= min_val) & (df_cleaned[filter_column] <= max_val)]
-        else:
-            unique_values = df_cleaned[filter_column].unique()
-            selected_values = st.multiselect(f"Select values for {filter_column}", unique_values, default=unique_values)
-            filtered_df = df_cleaned[df_cleaned[filter_column].isin(selected_values)]
-        
-        st.dataframe(filtered_df.style.applymap(lambda x: "background-color: rgba(255, 255, 255, 0.1);"), use_container_width=True, height=350)
-        
         # Data Visualization
         if not numeric_columns.empty:
             st.subheader("📈 Interactive Data Visualizations")
@@ -159,7 +156,7 @@ if uploaded_file:
             
             with col1:
                 fig = px.histogram(
-                    filtered_df, 
+                    df_cleaned, 
                     x=selected_column, 
                     nbins=40, 
                     title=f"📊 {selected_column} Distribution", 
@@ -171,7 +168,7 @@ if uploaded_file:
             
             with col2:
                 fig = px.box(
-                    filtered_df, 
+                    df_cleaned, 
                     y=selected_column, 
                     title=f"📦 {selected_column} Boxplot", 
                     template="plotly_dark", 
@@ -181,7 +178,7 @@ if uploaded_file:
             
             with col3:
                 fig = px.line(
-                    filtered_df, 
+                    df_cleaned, 
                     y=selected_column, 
                     title=f"📈 {selected_column} Trend Line", 
                     template="plotly_dark", 
@@ -189,35 +186,33 @@ if uploaded_file:
                     color_discrete_sequence=["#FFD700"]
                 )
                 st.plotly_chart(fig, use_container_width=True)
-        
-        # AI-Powered Insights
-        st.subheader("🤖 AI-Powered Insights")
-        if len(numeric_columns) > 1:
-            kmeans_clusters = st.slider("Number of Clusters for K-Means", 2, 10, 3)
-            scaler = StandardScaler()
-            scaled_data = scaler.fit_transform(filtered_df[numeric_columns])
-            kmeans = KMeans(n_clusters=kmeans_clusters, random_state=42)
-            filtered_df["Cluster"] = kmeans.fit_predict(scaled_data)
             
-            fig = px.scatter_matrix(
-                filtered_df,
-                dimensions=numeric_columns,
-                color="Cluster",
-                title="K-Means Clustering",
-                template="plotly_dark",
-                color_continuous_scale="viridis"
+            st.subheader("📊 Q1, Q2, Q3 Comparison - Understanding quartiles")
+            q1, q2, q3 = df_cleaned[selected_column].quantile([0.25, 0.5, 0.75])
+            
+            fig = go.Figure()
+            fig.add_trace(go.Bar(
+                x=["Q1", "Q2 (Median)", "Q3"], 
+                y=[q1, q2, q3], 
+                marker_color=["#FF4B2B", "#FFD700", "#00C9A7"], 
+                text=[q1, q2, q3], 
+                textposition="auto"
+            ))
+            fig.update_layout(
+                title=f"📊 Q1, Q2, Q3 Comparison for {selected_column}", 
+                template="plotly_dark"
             )
             st.plotly_chart(fig, use_container_width=True)
         
         # Download cleaned data
         export_format = st.selectbox("📤 Select export format", ["CSV", "Excel"])
-        export_data = convert_df(filtered_df, format=export_format.lower())
+        export_data = convert_df(df_cleaned, format=export_format.lower())
         st.download_button(
-            label=f"📥 Download Filtered Data ({export_format})",
+            label=f"📥 Download Cleaned Data ({export_format})",
             data=export_data,
-            file_name=f"filtered_data.{export_format.lower()}",
+            file_name=f"cleaned_data.{export_format.lower()}",
             mime="text/csv" if export_format == "CSV" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            help="Download the filtered file for further analysis."
+            help="Download the cleaned file for further analysis."
         )
         
     except Exception as e:
