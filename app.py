@@ -251,7 +251,7 @@ if uploaded_file:
         with st.expander("🤖 Ask Grok - AI Insights"):
             question = st.text_input("Ask a question about your data (e.g., 'What’s the trend in this column?')")
             if question:
-                st.write("Grok’s response: [Placeholder - Imagine I’m analyzing your data here!]")
+                st.write("Thningking... 🤔")
                 # In a real integration, I’d process the question and df_cleaned here.
         
         # Download cleaned data
