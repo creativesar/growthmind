@@ -1,5 +1,7 @@
 import streamlit as st
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 from io import BytesIO
 import time
 
@@ -50,6 +52,24 @@ if uploaded_file:
         # Summary statistics with expander
         with st.expander("📊 Data Summary - Click to Expand"):
             st.write(df_cleaned.describe())
+        
+        # Data Visualization
+        numeric_columns = df_cleaned.select_dtypes(include=['number']).columns
+        if not numeric_columns.empty:
+            st.subheader("📈 Data Visualizations")
+            selected_column = st.selectbox("Select a column to visualize", numeric_columns)
+            
+            # Histogram
+            fig, ax = plt.subplots()
+            sns.histplot(df_cleaned[selected_column], bins=20, kde=True, ax=ax)
+            ax.set_title(f"Distribution of {selected_column}")
+            st.pyplot(fig)
+            
+            # Boxplot
+            fig, ax = plt.subplots()
+            sns.boxplot(y=df_cleaned[selected_column], ax=ax)
+            ax.set_title(f"Boxplot of {selected_column}")
+            st.pyplot(fig)
         
         # Download cleaned data with success message
         @st.cache_data
