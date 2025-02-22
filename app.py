@@ -1,83 +1,66 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
-import os
 from io import BytesIO
 
-st.set_page_config(page_title="Data Sweeper", layout="wide")
+# Streamlit app title
+st.set_page_config(page_title="Financial Data Sweeper", layout="wide")
+st.title("🚀 Financial Data Sweeper")
 
-st.markdown(
-    """
+# Custom Styling
+st.markdown("""
     <style>
-        .main { background-color: #121212; }
-        .block-container { padding: 2rem; background-color: #1e1e1e; border-radius: 12px; }
-        h1, h2, h3, h4, h5, h6, p, label, .stText { color: white !important; } /* Text White */
-        .stButton>button { background-color: #0078D7; color: white; border-radius: 8px; }
-        .stButton>button:hover { background-color: #005a9e; }
-        .stDownloadButton>button { background-color: #28a745; color: white; }
-        .stDownloadButton>button:hover { background-color: #218838; }
+        .stApp { background-color: #f4f4f4; font-family: 'Arial', sans-serif; }
+        .css-18e3th9 { background-color: white; padding: 20px; border-radius: 10px; box-shadow: 2px 2px 10px rgba(0,0,0,0.1); }
+        .stButton>button { background-color: #007BFF; color: white; border-radius: 8px; padding: 10px; font-size: 16px; }
+        .stSidebar { background-color: #f8f9fa; padding: 20px; border-radius: 10px; }
     </style>
-    """,
-    unsafe_allow_html=True
-)
+""", unsafe_allow_html=True)
 
-st.title("🚀 Advanced Financial Data Sweeper")
-st.write("Upload and clean your financial data, visualize trends, and convert between formats.")
+# File uploader
+st.sidebar.header("📂 Upload Data")
+uploaded_file = st.sidebar.file_uploader("Upload your CSV or Excel file", type=["csv", "xlsx"])
 
-uploaded_files = st.file_uploader("Upload CSV or Excel files:", type=["csv", "xlsx"], accept_multiple_files=True)
-
-if uploaded_files:
-    for file in uploaded_files:
-        file_extension = os.path.splitext(file.name)[-1].lower()
-        df = pd.read_csv(file) if file_extension == ".csv" else pd.read_excel(file)
-
-        st.write(f"**📄 File:** {file.name} ({file.size / 1024:.2f} KB)")
-        st.dataframe(df.head())
-        
-        st.subheader("📊 Data Insights")
-        st.write(df.describe())
-        
-        st.subheader("🛠️ Data Cleaning")
-        if st.checkbox(f"Remove Duplicates from {file.name}"):
-            df.drop_duplicates(inplace=True)
-            st.write("Duplicates Removed!")
-
-        if st.checkbox(f"Fill Missing Values for {file.name}"):
-            df.fillna(df.mean(), inplace=True)
-            st.write("Missing Values Filled with Mean!")
-        
-        st.subheader("📈 Visualization")
-        chart_type = st.selectbox(f"Choose a Chart Type for {file.name}", ["Bar", "Line", "Pie", "Histogram"], key=file.name)
-        numeric_columns = df.select_dtypes(include=['number']).columns
-        selected_column = st.selectbox("Select Column to Visualize", numeric_columns, key=file.name + "_col")
-
-        if chart_type == "Bar":
-            fig = px.bar(df, x=df.index, y=selected_column, title=f"Bar Chart of {selected_column}")
-        elif chart_type == "Line":
-            fig = px.line(df, x=df.index, y=selected_column, title=f"Line Chart of {selected_column}")
-        elif chart_type == "Pie":
-            fig = px.pie(df, names=selected_column, title=f"Pie Chart of {selected_column}")
+if uploaded_file:
+    try:
+        # Detect file type and read data
+        if uploaded_file.name.endswith(".csv"):
+            df = pd.read_csv(uploaded_file)
         else:
-            fig = px.histogram(df, x=selected_column, title=f"Histogram of {selected_column}")
+            df = pd.read_excel(uploaded_file)
 
-        st.plotly_chart(fig)
+        st.success("✅ File uploaded successfully!")
+        st.subheader("📜 Raw Data")
+        st.dataframe(df, use_container_width=True, height=300)
+
+        # Cleaning the data
+        df_cleaned = df.dropna()  # Remove missing values
+        df_cleaned = df_cleaned.drop_duplicates()  # Remove duplicate rows
         
-        st.subheader("🔄 Convert & Download")
-        conversion_type = st.radio("Convert to:", ["CSV", "Excel"], key=file.name + "_conv")
-        buffer = BytesIO()
-        if conversion_type == "CSV":
-            df.to_csv(buffer, index=False)
-            mime_type = "text/csv"
-        else:
-            df.to_excel(buffer, index=False, engine='openpyxl')
-            mime_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        buffer.seek(0)
+        st.subheader("✨ Cleaned Data")
+        st.dataframe(df_cleaned, use_container_width=True, height=300)
         
+        # Summary statistics
+        st.subheader("📊 Data Summary")
+        st.write(df_cleaned.describe())
+        
+        # Download cleaned data
+        @st.cache_data
+        def convert_df(df):
+            output = BytesIO()
+            df.to_csv(output, index=False)
+            processed_data = output.getvalue()
+            return processed_data
+        
+        csv = convert_df(df_cleaned)
         st.download_button(
-            label=f"⬇️ Download {file.name} as {conversion_type}",
-            data=buffer,
-            file_name=file.name.replace(file_extension, ".csv" if conversion_type == "CSV" else ".xlsx"),
-            mime=mime_type
+            label="📥 Download Cleaned Data",
+            data=csv,
+            file_name="cleaned_data.csv",
+            mime="text/csv",
+            help="Click to download the cleaned CSV file."
         )
-
-st.success("🎉 Processing Complete!")
+        
+    except Exception as e:
+        st.error(f"❌ Error processing file: {e}")
+else:
+    st.sidebar.info("Please upload a CSV or Excel file to proceed.")
