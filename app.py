@@ -49,7 +49,9 @@ def load_data(file):
 
 # Function to clean data
 def clean_data(df):
-    """Remove missing values and duplicate records from the dataframe."""
+    """Remove missing values, duplicate records, and convert numeric columns."""
+    for col in df.select_dtypes(include=['object']).columns:
+        df[col] = pd.to_numeric(df[col], errors='coerce')  # Convert non-numeric values to NaN
     return df.dropna().drop_duplicates()
 
 # Function to convert dataframe to downloadable CSV format
