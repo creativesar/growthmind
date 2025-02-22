@@ -2,219 +2,230 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import numpy as np
-from io import BytesIO
-from sklearn.preprocessing import StandardScaler
-from sklearn.cluster import KMeans
-from statsmodels.tsa.holtwinters import ExponentialSmoothing
 import time
+from io import BytesIO
+import numpy as np
 
-# App Configuration
-st.set_page_config(page_title="🔥 Financial Data Sweeper Elite", layout="wide", page_icon="💰", initial_sidebar_state="expanded")
+# Streamlit app configuration
+st.set_page_config(page_title="📊 Financial Data Sweeper", layout="wide", page_icon="🚀")
+st.title("🚀 Financial Data Sweeper")
 
-# Bold Styling
+# Custom Styling for enhanced UI/UX
 st.markdown(
     """
     <style>
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-        body { font-family: 'Montserrat', sans-serif; }
-        .stApp { 
-            background: linear-gradient(135deg, #1e3c72, #2a5298); 
-            color: #fff; 
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
-        .stSidebar { 
-            background: rgba(255, 255, 255, 0.15); 
-            backdrop-filter: blur(12px); 
-            border-radius: 10px; 
-            padding: 20px; 
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); 
-            animation: fadeIn 0.8s ease; 
+        @keyframes glow {
+            0% { box-shadow: 0 0 5px #00C9A7; }
+            50% { box-shadow: 0 0 20px #FF4B2B; }
+            100% { box-shadow: 0 0 5px #00C9A7; }
         }
+        @keyframes float {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0); }
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .stApp { background: linear-gradient(to right, #0f0c29, #302b63, #24243e); color: white; }
         .stButton>button { 
-            background: linear-gradient(45deg, #ff6b6b, #feca57); 
-            color: #fff; 
-            border: none; 
-            border-radius: 10px; 
-            padding: 12px 25px; 
-            font-weight: bold; 
-            transition: all 0.3s ease; 
-            animation: pulse 2s infinite; 
+            background: linear-gradient(to right, #ff416c, #ff4b2b); 
+            color: white; 
+            border-radius: 12px; 
+            padding: 12px 24px; 
+            font-size: 16px; 
+            transition: 0.3s ease-in-out; 
+            animation: glow 2s infinite, pop 0.5s ease-in-out; 
         }
-        .stButton>button:hover { 
-            background: linear-gradient(45deg, #feca57, #ff6b6b); 
-            transform: translateY(-3px); 
-            box-shadow: 0 6px 15px rgba(255, 107, 107, 0.5); 
-        }
-        .panel { 
+        .stButton>button:hover { transform: scale(1.1); }
+        .stSidebar { 
             background: rgba(255, 255, 255, 0.1); 
-            border-radius: 15px; 
+            backdrop-filter: blur(10px); 
             padding: 20px; 
-            margin: 15px 0; 
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); 
-            animation: fadeIn 0.5s ease; 
+            border-radius: 12px; 
+            box-shadow: 2px 2px 12px rgba(0,0,0,0.1); 
+            animation: fadeIn 1s ease-in-out; 
         }
-        h1, h2, h3 { color: #feca57; font-weight: 700; }
+        .stHeader { color: white; font-size: 2.5rem; font-weight: bold; animation: float 3s infinite; }
+        .stDataFrame { background: rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 10px; }
+        .stExpander { background: rgba(255, 255, 255, 0.1); border-radius: 12px; }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# Sidebar: Controls
-st.sidebar.title("🔥 Sweeper Controls")
-uploaded_file = st.sidebar.file_uploader("Upload Financial Data", type=["csv", "xlsx"], help="CSV or Excel files")
-view_mode = st.sidebar.selectbox("View Mode", ["Snapshot", "Forecast", "Clusters"])
-show_preview = st.sidebar.checkbox("Preview Data", value=True)
+# Sidebar - File uploader and theme switcher
+st.sidebar.header("📂 Upload Financial Data")
+uploaded_file = st.sidebar.file_uploader(
+    "Upload a CSV or Excel file", 
+    type=["csv", "xlsx"], 
+    help="Supports CSV and Excel files"
+)
+theme = st.sidebar.radio("🎨 Select Theme", ["Dark", "Light"])
 
-# Cached Functions
-@st.cache_data
-def load_data(file):
-    return pd.read_csv(file) if file.name.endswith(".csv") else pd.read_excel(file)
-
-@st.cache_data
-def clean_data(df, method="median", remove_outliers=False):
-    numeric_cols = df.select_dtypes(include=['number']).columns
-    if method == "median":
-        df[numeric_cols] = df[numeric_cols].fillna(df[numeric_cols].median())
-    elif method == "mean":
-        df[numeric_cols] = df[numeric_cols].fillna(df[numeric_cols].mean())
-    elif method == "drop":
-        df = df.dropna()
-    if remove_outliers:
-        for col in numeric_cols:
-            Q1, Q3 = df[col].quantile([0.25, 0.75])
-            IQR = Q3 - Q1
-            df = df[~((df[col] < (Q1 - 1.5 * IQR)) | (df[col] > (Q3 + 1.5 * IQR)))]
-    return df.drop_duplicates()
-
-def convert_df(df, format="csv"):
-    if format == "csv":
-        return df.to_csv(index=False).encode()
-    output = BytesIO()
-    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        df.to_excel(writer, index=False)
-    return output.getvalue()
-
-# Main App
-st.title("🔥 Financial Data Sweeper Elite")
-st.markdown("<p style='color: #dfe6e9;'>Ignite your financial insights with blazing speed and style.</p>", unsafe_allow_html=True)
+if theme == "Light":
+    st.markdown("""
+        <style>
+            .stApp { background: linear-gradient(to right, #ffffff, #f0f8ff); color: black; }
+        </style>
+    """, unsafe_allow_html=True)
 
 if uploaded_file:
-    with st.spinner("🔄 Sweeping data..."):
-        df = load_data(uploaded_file)
-        time.sleep(0.5)
-    
-    # Data Cleaning
-    st.markdown("<div class='panel'>", unsafe_allow_html=True)
-    st.subheader("🛠️ Data Forge")
-    cleaning_method = st.selectbox("Cleaning Protocol", ["Median Fill", "Mean Fill", "Drop Missing"], key="clean")
-    remove_outliers = st.checkbox("Eliminate Outliers", key="outliers")
-    df_cleaned = clean_data(df, method=cleaning_method.split()[0].lower(), remove_outliers=remove_outliers)
-    st.success(f"Data forged: {len(df_cleaned)} rows, {len(df_cleaned.columns)} columns")
-    if show_preview:
-        st.write("Data Snapshot:")
-        st.dataframe(df_cleaned.head(), use_container_width=True)
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    numeric_cols = df_cleaned.select_dtypes(include=['number']).columns
-    date_cols = df_cleaned.select_dtypes(include=['datetime']).columns
-
-    # View Modes
-    if view_mode == "Snapshot":
-        st.markdown("<div class='panel'>", unsafe_allow_html=True)
-        st.subheader("📊 Data Snapshot")
-        col1, col2 = st.columns(2)
-        with col1:
-            st.write("Core Metrics:")
-            metrics = df_cleaned[numeric_cols].agg(["mean", "median", "std"]).T
-            st.dataframe(metrics.style.format("{:.2f}"), height=200)
-        with col2:
-            if len(numeric_cols) > 1:
-                fig_corr = px.imshow(df_cleaned[numeric_cols].corr(), text_auto=".2f", title="Correlation Heatmap", 
-                                     color_continuous_scale="Viridis", height=400)
-                st.plotly_chart(fig_corr, use_container_width=True)
-        if len(numeric_cols) > 0:
-            hist_col = st.selectbox("Histogram Column", numeric_cols, key="hist")
-            fig_hist = px.histogram(df_cleaned, x=hist_col, nbins=40, title=f"{hist_col} Distribution", 
-                                    color_discrete_sequence=["#ff6b6b"])
-            st.plotly_chart(fig_hist, use_container_width=True)
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    elif view_mode == "Forecast":
-        st.markdown("<div class='panel'>", unsafe_allow_html=True)
-        st.subheader("⏳ Forecasting Engine")
-        if len(date_cols) > 0 and len(numeric_cols) > 0:
-            time_col = st.selectbox("Time Axis", date_cols, key="time")
-            value_col = st.selectbox("Value to Forecast", numeric_cols, key="value")
-            periods = st.slider("Forecast Periods", 5, 30, 10)
-            model = ExponentialSmoothing(df_cleaned[value_col], trend="add", seasonal=None).fit()
-            forecast = model.forecast(periods)
-            forecast_df = pd.DataFrame({
-                time_col: pd.date_range(start=df_cleaned[time_col].max(), periods=periods + 1, freq="D")[1:],
-                value_col: forecast
-            })
-            full_df = pd.concat([df_cleaned[[time_col, value_col]], forecast_df])
-            fig_forecast = px.line(full_df, x=time_col, y=value_col, title=f"{value_col} Forecast", 
-                                   color_discrete_sequence=["#feca57"])
-            fig_forecast.add_scatter(x=forecast_df[time_col], y=forecast_df[value_col], mode="lines", 
-                                     name="Forecast", line=dict(dash="dash", color="#ff6b6b"))
-            st.plotly_chart(fig_forecast, use_container_width=True)
-        else:
-            st.warning("Need a datetime and numeric column for forecasting!")
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    elif view_mode == "Clusters":
-        st.markdown("<div class='panel'>", unsafe_allow_html=True)
-        st.subheader("🌐 Cluster Analysis")
-        if len(numeric_cols) >= 2:
-            n_clusters = st.slider("Number of Clusters", 2, 10, 3)
-            scaler = StandardScaler()
-            scaled_data = scaler.fit_transform(df_cleaned[numeric_cols])
-            kmeans = KMeans(n_clusters=n_clusters, random_state=42)
-            clusters = kmeans.fit_predict(scaled_data)
-            df_cleaned["Cluster"] = clusters
-            x_col = st.selectbox("X Axis", numeric_cols, key="x_cluster")
-            y_col = st.selectbox("Y Axis", numeric_cols, index=1, key="y_cluster")
-            fig_cluster = px.scatter(df_cleaned, x=x_col, y=y_col, color="Cluster", title="Cluster Map", 
-                                     color_continuous_scale="Rainbow")
-            st.plotly_chart(fig_cluster, use_container_width=True)
-            st.write("Cluster Centers:")
-            st.dataframe(pd.DataFrame(scaler.inverse_transform(kmeans.cluster_centers_), columns=numeric_cols))
-        else:
-            st.warning("Need at least 2 numeric columns for clustering!")
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    # Dynamic Dashboard
-    st.markdown("<div class='panel'>", unsafe_allow_html=True)
-    st.subheader("🎛️ Dynamic Dashboard")
-    dash_cols = st.multiselect("Select Dashboard Metrics", numeric_cols, default=list(numeric_cols)[:3])
-    if dash_cols:
-        fig_dash = go.Figure()
-        colors = ["#ff6b6b", "#feca57", "#48dbfb"]
-        for i, col in enumerate(dash_cols):
-            fig_dash.add_trace(go.Scatter(x=df_cleaned.index, y=df_cleaned[col], name=col, 
-                                          mode="lines+markers", line=dict(color=colors[i % len(colors)])))
-        fig_dash.update_layout(template="plotly_dark", height=500)
-        st.plotly_chart(fig_dash, use_container_width=True)
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    # Export
-    st.markdown("<div class='panel'>", unsafe_allow_html=True)
-    st.subheader("📥 Export Suite")
-    export_format = st.selectbox("Export Format", ["CSV", "Excel"], key="export")
-    export_data = convert_df(df_cleaned, export_format.lower())
-    st.download_button(f"Download {export_format}", export_data, f"sweeper_elite.{export_format.lower()}",
-                       mime="text/csv" if export_format == "CSV" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    st.markdown("</div>", unsafe_allow_html=True)
-
+    st.sidebar.success("✅ File uploaded!")
 else:
-    st.markdown("<div style='text-align: center; color: #dfe6e9;'>Drop your data to ignite the sweep!</div>", unsafe_allow_html=True)
+    st.sidebar.info("Awaiting file upload...")
 
-# Footer
+# Function to load data from file
+def load_data(file):
+    """Load data from uploaded CSV or Excel file."""
+    return pd.read_csv(file) if file.name.endswith(".csv") else pd.read_excel(file)
+
+# Function to clean data
+def clean_data(df, method="drop"):
+    """Handle missing values based on user preference."""
+    if method == "drop":
+        return df.dropna().drop_duplicates()
+    elif method == "mean":
+        numeric_cols = df.select_dtypes(include=['number']).columns
+        df[numeric_cols] = df[numeric_cols].fillna(df[numeric_cols].mean())
+        return df.drop_duplicates()
+    elif method == "median":
+        numeric_cols = df.select_dtypes(include=['number']).columns
+        df[numeric_cols] = df[numeric_cols].fillna(df[numeric_cols].median())
+        return df.drop_duplicates()
+
+# Function to convert dataframe to downloadable format
+def convert_df(df, format="csv"):
+    """Convert dataframe to CSV or Excel format for downloading."""
+    if format == "csv":
+        output = BytesIO()
+        df.to_csv(output, index=False)
+        return output.getvalue()
+    elif format == "excel":
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False)
+        output.seek(0)
+        return output.read()
+
+if uploaded_file:
+    try:
+        with st.spinner("🚀 Processing file..."):
+            df = load_data(uploaded_file)  # Load data
+            time.sleep(1)
+        
+        st.success("🎉 File successfully uploaded!")
+        
+        # Display raw data
+        st.subheader("📜 Raw Data - Original dataset preview")
+        st.dataframe(df.style.applymap(lambda x: "background-color: rgba(255, 255, 255, 0.1);"), use_container_width=True, height=350)
+        
+        # Clean data by removing NaN and duplicate values
+        cleaning_method = st.selectbox("🧹 Select cleaning method", ["Drop Missing Values", "Fill with Mean", "Fill with Median"])
+        cleaning_method_map = {
+            "Drop Missing Values": "drop",
+            "Fill with Mean": "mean",
+            "Fill with Median": "median"
+        }
+        df_cleaned = clean_data(df, method=cleaning_method_map[cleaning_method])
+        
+        st.subheader("✨ Cleaned Data - Processed for accuracy")
+        st.dataframe(df_cleaned.style.applymap(lambda x: "background-color: rgba(255, 255, 255, 0.1);"), use_container_width=True, height=350)
+        
+        # Summary statistics
+        with st.expander("📊 Data Summary - Click to Expand"):
+            st.write("Statistical insights of the dataset:")
+            st.write(df_cleaned.describe().style.background_gradient(cmap="viridis"))
+        
+        # Correlation Heatmap
+        numeric_columns = df_cleaned.select_dtypes(include=['number']).columns
+        if not numeric_columns.empty:
+            st.subheader("🔥 Correlation Heatmap")
+            corr_matrix = df_cleaned[numeric_columns].corr()
+            fig = px.imshow(corr_matrix, text_auto=True, title="Correlation Heatmap", template="plotly_dark", color_continuous_scale="viridis")
+            st.plotly_chart(fig, use_container_width=True)
+        
+        # Data Visualization
+        if not numeric_columns.empty:
+            st.subheader("📈 Interactive Data Visualizations")
+            selected_column = st.selectbox("Select a column to visualize", numeric_columns)
+            
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                fig = px.histogram(
+                    df_cleaned, 
+                    x=selected_column, 
+                    nbins=40, 
+                    title=f"📊 {selected_column} Distribution", 
+                    template="plotly_dark", 
+                    color_discrete_sequence=["#FF4B2B"]
+                )
+                fig.update_layout(bargap=0.1, hovermode="x unified")
+                st.plotly_chart(fig, use_container_width=True)
+            
+            with col2:
+                fig = px.box(
+                    df_cleaned, 
+                    y=selected_column, 
+                    title=f"📦 {selected_column} Boxplot", 
+                    template="plotly_dark", 
+                    color_discrete_sequence=["#00C9A7"]
+                )
+                st.plotly_chart(fig, use_container_width=True)
+            
+            with col3:
+                fig = px.line(
+                    df_cleaned, 
+                    y=selected_column, 
+                    title=f"📈 {selected_column} Trend Line", 
+                    template="plotly_dark", 
+                    markers=True, 
+                    color_discrete_sequence=["#FFD700"]
+                )
+                st.plotly_chart(fig, use_container_width=True)
+            
+            st.subheader("📊 Q1, Q2, Q3 Comparison - Understanding quartiles")
+            q1, q2, q3 = df_cleaned[selected_column].quantile([0.25, 0.5, 0.75])
+            
+            fig = go.Figure()
+            fig.add_trace(go.Bar(
+                x=["Q1", "Q2 (Median)", "Q3"], 
+                y=[q1, q2, q3], 
+                marker_color=["#FF4B2B", "#FFD700", "#00C9A7"], 
+                text=[q1, q2, q3], 
+                textposition="auto"
+            ))
+            fig.update_layout(
+                title=f"📊 Q1, Q2, Q3 Comparison for {selected_column}", 
+                template="plotly_dark"
+            )
+            st.plotly_chart(fig, use_container_width=True)
+        
+        # Download cleaned data
+        export_format = st.selectbox("📤 Select export format", ["CSV", "Excel"])
+        export_data = convert_df(df_cleaned, format=export_format.lower())
+        st.download_button(
+            label=f"📥 Download Cleaned Data ({export_format})",
+            data=export_data,
+            file_name=f"cleaned_data.{export_format.lower()}",
+            mime="text/csv" if export_format == "CSV" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            help="Download the cleaned file for further analysis."
+        )
+        
+    except Exception as e:
+        st.error(f"❌ Error processing file: {e}")
+else:
+    st.sidebar.warning("⚠ Please upload a file to proceed.")
+
+# Add a futuristic footer
 st.markdown(
     """
-    <div style='text-align: center; padding: 20px; color: #dfe6e9;'>
-        <p>Built by Sarfraz | Powered by xAI | Unleash the Elite</p>
+    <div style="text-align: center; padding: 20px; background: rgba(255, 255, 255, 0.1); border-radius: 12px; margin-top: 20px;">
+        <h3 style="color: white; animation: float 3s infinite;">Developed By Sarfraz</h3>
+        <p style="color: white;">Explore the future of financial data analysis!</p>
     </div>
     """,
     unsafe_allow_html=True,
