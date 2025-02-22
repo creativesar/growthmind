@@ -12,11 +12,11 @@ st.title("🚀 Financial Data Sweeper")
 # Custom Styling
 st.markdown("""
     <style>
-        .stApp { background-color: #f4f4f4; font-family: 'Arial', sans-serif; }
-        .css-18e3th9 { background-color: white; padding: 20px; border-radius: 10px; box-shadow: 2px 2px 10px rgba(0,0,0,0.1); }
-        .stButton>button { background-color: #007BFF; color: white; border-radius: 8px; padding: 10px; font-size: 16px; transition: 0.3s ease-in-out; }
-        .stButton>button:hover { background-color: #0056b3; }
-        .stSidebar { background-color: #f8f9fa; padding: 20px; border-radius: 10px; }
+        .stApp { background-color: #f0f2f6; font-family: 'Arial', sans-serif; }
+        .css-18e3th9 { background-color: white; padding: 20px; border-radius: 12px; box-shadow: 4px 4px 12px rgba(0,0,0,0.1); }
+        .stButton>button { background: linear-gradient(to right, #ff7e5f, #feb47b); color: white; border-radius: 8px; padding: 12px; font-size: 16px; transition: 0.3s ease-in-out; }
+        .stButton>button:hover { background: linear-gradient(to right, #ff512f, #dd2476); }
+        .stSidebar { background-color: #ffffff; padding: 20px; border-radius: 10px; box-shadow: 2px 2px 8px rgba(0,0,0,0.1); }
         .stAlert { font-size: 18px; font-weight: bold; }
     </style>
 """, unsafe_allow_html=True)
@@ -40,14 +40,14 @@ if uploaded_file:
 
         st.success("✅ File uploaded successfully!")
         st.subheader("📜 Raw Data")
-        st.dataframe(df, use_container_width=True, height=300)
+        st.dataframe(df, use_container_width=True, height=350)
 
         # Cleaning the data
         df_cleaned = df.dropna()  # Remove missing values
         df_cleaned = df_cleaned.drop_duplicates()  # Remove duplicate rows
         
         st.subheader("✨ Cleaned Data")
-        st.dataframe(df_cleaned, use_container_width=True, height=300)
+        st.dataframe(df_cleaned, use_container_width=True, height=350)
         
         # Summary statistics with expander
         with st.expander("📊 Data Summary - Click to Expand"):
@@ -60,13 +60,18 @@ if uploaded_file:
             selected_column = st.selectbox("Select a column to visualize", numeric_columns)
             
             # Modern Histogram
-            fig = px.histogram(df_cleaned, x=selected_column, nbins=30, title=f"📊 Distribution of {selected_column}", template="plotly_dark")
-            fig.update_layout(bargap=0.1, xaxis_title=selected_column, yaxis_title="Count")
+            fig = px.histogram(df_cleaned, x=selected_column, nbins=40, title=f"📊 Distribution of {selected_column}", template="plotly_white", color_discrete_sequence=["#ff7e5f"])
+            fig.update_layout(bargap=0.1, xaxis_title=selected_column, yaxis_title="Count", font=dict(size=14))
             st.plotly_chart(fig, use_container_width=True)
             
             # Modern Boxplot
-            fig = px.box(df_cleaned, y=selected_column, title=f"📦 Boxplot of {selected_column}", template="plotly_dark")
-            fig.update_layout(yaxis_title=selected_column)
+            fig = px.box(df_cleaned, y=selected_column, title=f"📦 Boxplot of {selected_column}", template="plotly_white", color_discrete_sequence=["#feb47b"])
+            fig.update_layout(yaxis_title=selected_column, font=dict(size=14))
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # Trend Line
+            fig = px.line(df_cleaned, y=selected_column, title=f"📈 Trend Line of {selected_column}", template="plotly_white", markers=True, color_discrete_sequence=["#007BFF"])
+            fig.update_layout(yaxis_title=selected_column, font=dict(size=14))
             st.plotly_chart(fig, use_container_width=True)
         
         # Download cleaned data with success message
