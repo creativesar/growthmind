@@ -3,6 +3,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import time
+import seaborn as sns
+import matplotlib.pyplot as plt
 from io import BytesIO
 
 # Streamlit app configuration
@@ -79,6 +81,12 @@ if uploaded_file:
         with st.expander("📊 Data Summary - Click to Expand"):
             st.write("Statistical insights of the dataset:")
             st.write(df_cleaned.describe())
+        
+        # Correlation Heatmap
+        st.subheader("🔥 Correlation Heatmap")
+        fig, ax = plt.subplots(figsize=(10, 6))
+        sns.heatmap(df_cleaned.corr(), annot=True, cmap="coolwarm", linewidths=0.5, ax=ax)
+        st.pyplot(fig)
         
         # Data Visualization
         numeric_columns = df_cleaned.select_dtypes(include=['number']).columns
