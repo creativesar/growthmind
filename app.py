@@ -49,10 +49,11 @@ def load_data(file):
 
 # Function to clean data
 def clean_data(df):
-    """Remove missing values, duplicate records, and convert numeric columns."""
-    for col in df.select_dtypes(include=['object']).columns:
-        df[col] = pd.to_numeric(df[col], errors='coerce')  # Convert non-numeric values to NaN
-    return df.dropna().drop_duplicates()
+    """Remove missing values, duplicate records, and convert numeric columns where applicable."""
+    for col in df.columns:
+        if pd.api.types.is_numeric_dtype(df[col]) == False:  # Convert only non-numeric columns
+            df[col] = pd.to_numeric(df[col], errors='coerce')  # Convert where possible
+    return df.dropna(how='all').drop_duplicates()
 
 # Function to convert dataframe to downloadable CSV format
 def convert_df(df):
@@ -86,13 +87,16 @@ if uploaded_file:
         
         # Correlation Heatmap
         st.subheader("🔥 Correlation Heatmap")
-        fig, ax = plt.subplots(figsize=(10, 6))
-        sns.heatmap(df_cleaned.corr(), annot=True, cmap="coolwarm", linewidths=0.5, ax=ax)
-        st.pyplot(fig)
+        if not df_cleaned.empty:
+            fig, ax = plt.subplots(figsize=(10, 6))
+            sns.heatmap(df_cleaned.corr(), annot=True, cmap="coolwarm", linewidths=0.5, ax=ax)
+            st.pyplot(fig)
+        else:
+            st.warning("⚠ No data available after cleaning!")
         
         # Data Visualization
         numeric_columns = df_cleaned.select_dtypes(include=['number']).columns
-        if not numeric_columns.empty:
+        if len(numeric_columns) > 0:
             st.subheader("📈 Interactive Data Visualizations")
             selected_column = st.selectbox("Select a column to visualize", numeric_columns)
             
@@ -118,6 +122,8 @@ if uploaded_file:
             fig.add_trace(go.Bar(x=["Q1", "Q2 (Median)", "Q3"], y=[q1, q2, q3], marker_color=["#FF4B2B", "#FFD700", "#00C9A7"], text=[q1, q2, q3], textposition="auto"))
             fig.update_layout(title=f"📊 Q1, Q2, Q3 Comparison for {selected_column}", template="plotly_white")
             st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.warning("⚠ No numeric columns found for visualization!")
         
         # Download cleaned data
         csv = convert_df(df_cleaned)
