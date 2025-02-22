@@ -3,87 +3,68 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import numpy as np
-import time
 from io import BytesIO
-from sklearn.ensemble import IsolationForest
-from streamlit_lottie import st_lottie
-import requests
-import base64
-import random
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
+from statsmodels.tsa.holtwinters import ExponentialSmoothing
+import time
 
 # App Configuration
-st.set_page_config(page_title="🌌 Financial Data Sweeper 2050", layout="wide", page_icon="⚡️", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="🔥 Financial Data Sweeper Elite", layout="wide", page_icon="💰", initial_sidebar_state="expanded")
 
-# Cyberpunk Styling with Animations
+# Bold Styling
 st.markdown(
     """
     <style>
-        @keyframes neonPulse { 0% { text-shadow: 0 0 5px #00ffcc, 0 0 10px #ff00cc; } 50% { text-shadow: 0 0 20px #00ffcc, 0 0 30px #ff00cc; } 100% { text-shadow: 0 0 5px #00ffcc, 0 0 10px #ff00cc; } }
-        @keyframes float { 0% { transform: translateY(0); } 50% { transform: translateY(-15px); } 100% { transform: translateY(0); } }
-        @keyframes bgShift { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
-        body { font-family: 'Orbitron', sans-serif; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        body { font-family: 'Montserrat', sans-serif; }
         .stApp { 
-            background: linear-gradient(45deg, #1a0d2e, #0f2b63, #1a0d2e); 
-            background-size: 200% 200%; 
-            animation: bgShift 15s infinite; 
+            background: linear-gradient(135deg, #1e3c72, #2a5298); 
             color: #fff; 
         }
-        .stButton>button { 
-            background: linear-gradient(45deg, #ff00cc, #00ffcc); 
-            color: #000; 
-            border: none; 
-            border-radius: 15px; 
-            padding: 15px 30px; 
-            font-size: 18px; 
-            animation: neonPulse 1.5s infinite; 
-            transition: transform 0.3s ease; 
-        }
-        .stButton>button:hover { transform: scale(1.15); }
         .stSidebar { 
-            background: rgba(0, 0, 0, 0.7); 
-            backdrop-filter: blur(15px); 
-            border: 2px solid #00ffcc; 
-            border-radius: 20px; 
-            padding: 25px; 
-        }
-        h1, h2, h3 { animation: neonPulse 2s infinite; }
-        .data-container { 
-            background: rgba(0, 255, 204, 0.1); 
-            border: 1px solid #ff00cc; 
+            background: rgba(255, 255, 255, 0.15); 
+            backdrop-filter: blur(12px); 
             border-radius: 10px; 
             padding: 20px; 
-            margin: 10px 0; 
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); 
+            animation: fadeIn 0.8s ease; 
         }
+        .stButton>button { 
+            background: linear-gradient(45deg, #ff6b6b, #feca57); 
+            color: #fff; 
+            border: none; 
+            border-radius: 10px; 
+            padding: 12px 25px; 
+            font-weight: bold; 
+            transition: all 0.3s ease; 
+            animation: pulse 2s infinite; 
+        }
+        .stButton>button:hover { 
+            background: linear-gradient(45deg, #feca57, #ff6b6b); 
+            transform: translateY(-3px); 
+            box-shadow: 0 6px 15px rgba(255, 107, 107, 0.5); 
+        }
+        .panel { 
+            background: rgba(255, 255, 255, 0.1); 
+            border-radius: 15px; 
+            padding: 20px; 
+            margin: 15px 0; 
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); 
+            animation: fadeIn 0.5s ease; 
+        }
+        h1, h2, h3 { color: #feca57; font-weight: 700; }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# Lottie Animation Loader (Cyberpunk City)
-def load_lottie_url(url):
-    r = requests.get(url)
-    return r.json() if r.status_code == 200 else None
-
-lottie_city = load_lottie_url("https://assets5.lottiefiles.com/packages/lf20_tows2oda.json")  # Cyberpunk city animation
-
-# Initialize Session State
-if "score" not in st.session_state:
-    st.session_state.score = 0
-if "theme" not in st.session_state:
-    st.session_state.theme = "Cyberpunk"
-
-# Sidebar: Mission Control
-with st.sidebar:
-    st.title("⚡️ Mission Control")
-    uploaded_file = st.file_uploader("Upload Data Core (CSV/Excel)", type=["csv", "xlsx"], key="uploader")
-    st.session_state.theme = st.selectbox("Select Holo-Theme", ["Cyberpunk", "Neon Dark", "Quantum Glow"])
-    theme_styles = {
-        "Cyberpunk": "background: linear-gradient(45deg, #1a0d2e, #0f2b63, #1a0d2e); color: #fff;",
-        "Neon Dark": "background: linear-gradient(45deg, #0f0c29, #302b63); color: #00ffcc;",
-        "Quantum Glow": "background: linear-gradient(45deg, #000428, #004e92); color: #ffd700;"
-    }
-    st.markdown(f"<style>.stApp {{{theme_styles[st.session_state.theme]}}}</style>", unsafe_allow_html=True)
-    st.write(f"🛡️ Agent Score: {st.session_state.score}")
+# Sidebar: Controls
+st.sidebar.title("🔥 Sweeper Controls")
+uploaded_file = st.sidebar.file_uploader("Upload Financial Data", type=["csv", "xlsx"], help="CSV or Excel files")
+view_mode = st.sidebar.selectbox("View Mode", ["Snapshot", "Forecast", "Clusters"])
+show_preview = st.sidebar.checkbox("Preview Data", value=True)
 
 # Cached Functions
 @st.cache_data
@@ -91,18 +72,20 @@ def load_data(file):
     return pd.read_csv(file) if file.name.endswith(".csv") else pd.read_excel(file)
 
 @st.cache_data
-def clean_data(df, method="drop", remove_outliers=False):
-    methods = {"drop": df.dropna, "mean": lambda x: x.fillna(x.mean()), "median": lambda x: x.fillna(x.median())}
+def clean_data(df, method="median", remove_outliers=False):
     numeric_cols = df.select_dtypes(include=['number']).columns
-    df_clean = methods.get(method, df.dropna)()
-    if method in ["mean", "median"]:
-        df_clean[numeric_cols] = methods[method](df[numeric_cols])
+    if method == "median":
+        df[numeric_cols] = df[numeric_cols].fillna(df[numeric_cols].median())
+    elif method == "mean":
+        df[numeric_cols] = df[numeric_cols].fillna(df[numeric_cols].mean())
+    elif method == "drop":
+        df = df.dropna()
     if remove_outliers:
         for col in numeric_cols:
-            Q1, Q3 = df_clean[col].quantile([0.25, 0.75])
+            Q1, Q3 = df[col].quantile([0.25, 0.75])
             IQR = Q3 - Q1
-            df_clean = df_clean[~((df_clean[col] < (Q1 - 1.5 * IQR)) | (df_clean[col] > (Q3 + 1.5 * IQR)))]
-    return df_clean.drop_duplicates()
+            df = df[~((df[col] < (Q1 - 1.5 * IQR)) | (df[col] > (Q3 + 1.5 * IQR)))]
+    return df.drop_duplicates()
 
 def convert_df(df, format="csv"):
     if format == "csv":
@@ -113,113 +96,126 @@ def convert_df(df, format="csv"):
     return output.getvalue()
 
 # Main App
-st.title("🌌 Financial Data Sweeper 2050")
-st_lottie(lottie_city, height=200, key="city")
+st.title("🔥 Financial Data Sweeper Elite")
+st.markdown("<p style='color: #dfe6e9;'>Ignite your financial insights with blazing speed and style.</p>", unsafe_allow_html=True)
 
 if uploaded_file:
-    with st.spinner("⚡️ Initializing Data Core..."):
+    with st.spinner("🔄 Sweeping data..."):
         df = load_data(uploaded_file)
-        st.session_state.score += 10  # Reward for uploading
+        time.sleep(0.5)
     
-    st.success("⚡️ Data Core Activated!")
-    st.audio("https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", format="audio/mp3", start_time=0)  # Sci-fi sound
-
-    # Cleaning & Transformation
-    st.markdown("<div class='data-container'>", unsafe_allow_html=True)
-    st.subheader("🧠 Data Core Processor")
-    cleaning_method = st.selectbox("Select Purification Protocol", ["Drop", "Mean", "Median"])
-    remove_outliers = st.checkbox("Enable Anomaly Shield")
-    df_cleaned = clean_data(df, method=cleaning_method.lower(), remove_outliers=remove_outliers)
-    
-    transform = st.selectbox("Quantum Transformation", ["None", "Log", "Normalize"])
-    if transform != "None":
-        numeric_cols = df_cleaned.select_dtypes(include=['number']).columns
-        if transform == "Log":
-            df_cleaned[numeric_cols] = np.log1p(df_cleaned[numeric_cols])
-        elif transform == "Normalize":
-            df_cleaned[numeric_cols] = (df_cleaned[numeric_cols] - df_cleaned[numeric_cols].min()) / (df_cleaned[numeric_cols].max() - df_cleaned[numeric_cols].min())
-        st.session_state.score += 5  # Reward for transformation
-    st.dataframe(df_cleaned.head(), use_container_width=True)
+    # Data Cleaning
+    st.markdown("<div class='panel'>", unsafe_allow_html=True)
+    st.subheader("🛠️ Data Forge")
+    cleaning_method = st.selectbox("Cleaning Protocol", ["Median Fill", "Mean Fill", "Drop Missing"], key="clean")
+    remove_outliers = st.checkbox("Eliminate Outliers", key="outliers")
+    df_cleaned = clean_data(df, method=cleaning_method.split()[0].lower(), remove_outliers=remove_outliers)
+    st.success(f"Data forged: {len(df_cleaned)} rows, {len(df_cleaned.columns)} columns")
+    if show_preview:
+        st.write("Data Snapshot:")
+        st.dataframe(df_cleaned.head(), use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # AI Anomaly Detection
-    st.markdown("<div class='data-container'>", unsafe_allow_html=True)
-    st.subheader("🤖 AI Sentinel")
-    if st.button("Scan for Anomalies"):
-        numeric_cols = df_cleaned.select_dtypes(include=['number']).columns
+    numeric_cols = df_cleaned.select_dtypes(include=['number']).columns
+    date_cols = df_cleaned.select_dtypes(include=['datetime']).columns
+
+    # View Modes
+    if view_mode == "Snapshot":
+        st.markdown("<div class='panel'>", unsafe_allow_html=True)
+        st.subheader("📊 Data Snapshot")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.write("Core Metrics:")
+            metrics = df_cleaned[numeric_cols].agg(["mean", "median", "std"]).T
+            st.dataframe(metrics.style.format("{:.2f}"), height=200)
+        with col2:
+            if len(numeric_cols) > 1:
+                fig_corr = px.imshow(df_cleaned[numeric_cols].corr(), text_auto=".2f", title="Correlation Heatmap", 
+                                     color_continuous_scale="Viridis", height=400)
+                st.plotly_chart(fig_corr, use_container_width=True)
         if len(numeric_cols) > 0:
-            iso_forest = IsolationForest(contamination=0.1, random_state=42)
-            anomalies = iso_forest.fit_predict(df_cleaned[numeric_cols])
-            df_cleaned["Anomaly"] = anomalies == -1
-            st.write(f"Detected {df_cleaned['Anomaly'].sum()} anomalies!")
-            fig = px.scatter(df_cleaned, x=numeric_cols[0], y=numeric_cols[1] if len(numeric_cols) > 1 else numeric_cols[0], 
-                             color="Anomaly", title="Anomaly Scan", template="plotly_dark")
-            st.plotly_chart(fig, use_container_width=True)
-            st.session_state.score += 20  # Big reward for AI use
-    st.markdown("</div>", unsafe_allow_html=True)
+            hist_col = st.selectbox("Histogram Column", numeric_cols, key="hist")
+            fig_hist = px.histogram(df_cleaned, x=hist_col, nbins=40, title=f"{hist_col} Distribution", 
+                                    color_discrete_sequence=["#ff6b6b"])
+            st.plotly_chart(fig_hist, use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    # Immersive Visualizations
-    st.markdown("<div class='data-container'>", unsafe_allow_html=True)
-    st.subheader("🌐 Holo-Visor")
-    numeric_columns = df_cleaned.select_dtypes(include=['number']).columns
-    if len(numeric_columns) >= 3:
-        x_3d, y_3d, z_3d = st.selectbox("X Axis", numeric_columns), st.selectbox("Y Axis", numeric_columns, index=1), st.selectbox("Z Axis", numeric_columns, index=2)
-        fig_3d = px.scatter_3d(df_cleaned, x=x_3d, y=y_3d, z=z_3d, color=z_3d, title="Quantum Data Globe", 
-                               template="plotly_dark", size_max=10, opacity=0.7)
-        fig_3d.update_layout(scene=dict(bgcolor="rgba(0,0,0,0)"))
-        st.plotly_chart(fig_3d, use_container_width=True)
-        st.session_state.score += 15
+    elif view_mode == "Forecast":
+        st.markdown("<div class='panel'>", unsafe_allow_html=True)
+        st.subheader("⏳ Forecasting Engine")
+        if len(date_cols) > 0 and len(numeric_cols) > 0:
+            time_col = st.selectbox("Time Axis", date_cols, key="time")
+            value_col = st.selectbox("Value to Forecast", numeric_cols, key="value")
+            periods = st.slider("Forecast Periods", 5, 30, 10)
+            model = ExponentialSmoothing(df_cleaned[value_col], trend="add", seasonal=None).fit()
+            forecast = model.forecast(periods)
+            forecast_df = pd.DataFrame({
+                time_col: pd.date_range(start=df_cleaned[time_col].max(), periods=periods + 1, freq="D")[1:],
+                value_col: forecast
+            })
+            full_df = pd.concat([df_cleaned[[time_col, value_col]], forecast_df])
+            fig_forecast = px.line(full_df, x=time_col, y=value_col, title=f"{value_col} Forecast", 
+                                   color_discrete_sequence=["#feca57"])
+            fig_forecast.add_scatter(x=forecast_df[time_col], y=forecast_df[value_col], mode="lines", 
+                                     name="Forecast", line=dict(dash="dash", color="#ff6b6b"))
+            st.plotly_chart(fig_forecast, use_container_width=True)
+        else:
+            st.warning("Need a datetime and numeric column for forecasting!")
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    # Real-Time Simulation
-    if st.button("Activate Real-Time Feed"):
-        st.subheader("📡 Data Stream Simulation")
-        placeholder = st.empty()
-        for _ in range(10):
-            simulated_data = df_cleaned[numeric_columns].apply(lambda x: x * (1 + random.uniform(-0.05, 0.05)))
-            fig_stream = px.line(simulated_data, title="Live Financial Stream", template="plotly_dark")
-            placeholder.plotly_chart(fig_stream, use_container_width=True)
-            time.sleep(0.5)
-        st.session_state.score += 25
+    elif view_mode == "Clusters":
+        st.markdown("<div class='panel'>", unsafe_allow_html=True)
+        st.subheader("🌐 Cluster Analysis")
+        if len(numeric_cols) >= 2:
+            n_clusters = st.slider("Number of Clusters", 2, 10, 3)
+            scaler = StandardScaler()
+            scaled_data = scaler.fit_transform(df_cleaned[numeric_cols])
+            kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+            clusters = kmeans.fit_predict(scaled_data)
+            df_cleaned["Cluster"] = clusters
+            x_col = st.selectbox("X Axis", numeric_cols, key="x_cluster")
+            y_col = st.selectbox("Y Axis", numeric_cols, index=1, key="y_cluster")
+            fig_cluster = px.scatter(df_cleaned, x=x_col, y=y_col, color="Cluster", title="Cluster Map", 
+                                     color_continuous_scale="Rainbow")
+            st.plotly_chart(fig_cluster, use_container_width=True)
+            st.write("Cluster Centers:")
+            st.dataframe(pd.DataFrame(scaler.inverse_transform(kmeans.cluster_centers_), columns=numeric_cols))
+        else:
+            st.warning("Need at least 2 numeric columns for clustering!")
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    # Augmented Insights
-    st.subheader("🔍 Augmented Insights")
-    if len(numeric_columns) > 1:
-        fig_rad = go.Figure(data=go.Scatterpolar(r=df_cleaned[numeric_columns].mean(), theta=numeric_columns, fill='toself'))
-        fig_rad.update_layout(polar=dict(radialaxis=dict(visible=True)), showlegend=False, template="plotly_dark")
-        st.plotly_chart(fig_rad, use_container_width=True)
+    # Dynamic Dashboard
+    st.markdown("<div class='panel'>", unsafe_allow_html=True)
+    st.subheader("🎛️ Dynamic Dashboard")
+    dash_cols = st.multiselect("Select Dashboard Metrics", numeric_cols, default=list(numeric_cols)[:3])
+    if dash_cols:
+        fig_dash = go.Figure()
+        colors = ["#ff6b6b", "#feca57", "#48dbfb"]
+        for i, col in enumerate(dash_cols):
+            fig_dash.add_trace(go.Scatter(x=df_cleaned.index, y=df_cleaned[col], name=col, 
+                                          mode="lines+markers", line=dict(color=colors[i % len(colors)])))
+        fig_dash.update_layout(template="plotly_dark", height=500)
+        st.plotly_chart(fig_dash, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
     # Export
-    st.subheader("💾 Data Vault")
-    export_format = st.selectbox("Export Protocol", ["CSV", "Excel"])
+    st.markdown("<div class='panel'>", unsafe_allow_html=True)
+    st.subheader("📥 Export Suite")
+    export_format = st.selectbox("Export Format", ["CSV", "Excel"], key="export")
     export_data = convert_df(df_cleaned, export_format.lower())
-    st.download_button(f"Download {export_format}", export_data, f"data_sweep.{export_format.lower()}",
+    st.download_button(f"Download {export_format}", export_data, f"sweeper_elite.{export_format.lower()}",
                        mime="text/csv" if export_format == "CSV" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    st.markdown("</div>", unsafe_allow_html=True)
 
 else:
-    st.markdown("<h2 style='text-align: center;'>⚡️ Awaiting Data Core Insertion...</h2>", unsafe_allow_html=True)
-    st_lottie(load_lottie_url("https://assets8.lottiefiles.com/packages/lf20_yppqjrfw.json"), height=300)  # Loading animation
+    st.markdown("<div style='text-align: center; color: #dfe6e9;'>Drop your data to ignite the sweep!</div>", unsafe_allow_html=True)
 
-# Leaderboard & Footer
-st.markdown("<div class='data-container'>", unsafe_allow_html=True)
-st.subheader("🏆 Agent Leaderboard")
-leaderboard = {"Agent X": 150, "CyberGhost": 120, f"You": st.session_state.score}
-st.write(pd.DataFrame(leaderboard.items(), columns=["Agent", "Score"]).sort_values("Score", ascending=False))
-st.markdown("</div>", unsafe_allow_html=True)
-
+# Footer
 st.markdown(
     """
-    <div style='text-align: center; padding: 20px; background: rgba(0, 255, 204, 0.1); border: 2px solid #ff00cc; border-radius: 15px;'>
-        <h3 style='animation: float 3s infinite;'>Crafted by Sarfraz in 2050</h3>
-        <p>Sweep the Future of Finance!</p>
+    <div style='text-align: center; padding: 20px; color: #dfe6e9;'>
+        <p>Built by Sarfraz | Powered by xAI | Unleash the Elite</p>
     </div>
     """,
     unsafe_allow_html=True,
 )
-
-# Holo-Feedback
-with st.expander("📡 Transmit Feedback"):
-    feedback = st.text_area("Send Signal to HQ")
-    if st.button("Transmit"):
-        st.success("Signal Received!")
-        st.session_state.score += 5
