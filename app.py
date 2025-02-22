@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import time
 from io import BytesIO
 import numpy as np
 
@@ -37,7 +36,7 @@ st.markdown(
             padding: 12px 24px; 
             font-size: 16px; 
             transition: 0.3s ease-in-out; 
-            animation: glow 2s infinite, pop 0.5s ease-in-out; 
+            animation: glow 2s infinite; 
         }
         .stButton>button:hover { transform: scale(1.1); }
         .stSidebar { 
@@ -77,7 +76,8 @@ if uploaded_file:
 else:
     st.sidebar.info("Awaiting file upload...")
 
-# Function to load data from file
+# Cached function to load data
+@st.cache_data
 def load_data(file):
     """Load data from uploaded CSV or Excel file."""
     return pd.read_csv(file) if file.name.endswith(".csv") else pd.read_excel(file)
@@ -95,6 +95,21 @@ def clean_data(df, method="drop"):
         numeric_cols = df.select_dtypes(include=['number']).columns
         df[numeric_cols] = df[numeric_cols].fillna(df[numeric_cols].median())
         return df.drop_duplicates()
+    elif method == "zero":
+        numeric_cols = df.select_dtypes(include=['number']).columns
+        df[numeric_cols] = df[numeric_cols].fillna(0)
+        return df.drop_duplicates()
+
+# Function to detect outliers
+def detect_outliers(df, column):
+    """Detect outliers using IQR method."""
+    Q1 = df[column].quantile(0.25)
+    Q3 = df[column].quantile(0.75)
+    IQR = Q3 - Q1
+    lower_bound = Q1 - 1.5 * IQR
+    upper_bound = Q3 + 1.5 * IQR
+    outliers = df[(df[column] < lower_bound) | (df[column] > upper_bound)][column]
+    return outliers
 
 # Function to convert dataframe to downloadable format
 def convert_df(df, format="csv"):
@@ -112,9 +127,13 @@ def convert_df(df, format="csv"):
 
 if uploaded_file:
     try:
+        # Progress bar for loading
+        progress_bar = st.progress(0)
         with st.spinner("🚀 Processing file..."):
             df = load_data(uploaded_file)  # Load data
-            time.sleep(1)
+            for i in range(100):
+                progress_bar.progress(i + 1)
+            progress_bar.empty()
         
         st.success("🎉 File successfully uploaded!")
         
@@ -123,11 +142,12 @@ if uploaded_file:
         st.dataframe(df.style.applymap(lambda x: "background-color: rgba(255, 255, 255, 0.1);"), use_container_width=True, height=350)
         
         # Clean data by removing NaN and duplicate values
-        cleaning_method = st.selectbox("🧹 Select cleaning method", ["Drop Missing Values", "Fill with Mean", "Fill with Median"])
+        cleaning_method = st.selectbox("🧹 Select cleaning method", ["Drop Missing Values", "Fill with Mean", "Fill with Median", "Fill with Zero"])
         cleaning_method_map = {
             "Drop Missing Values": "drop",
             "Fill with Mean": "mean",
-            "Fill with Median": "median"
+            "Fill with Median": "median",
+            "Fill with Zero": "zero"
         }
         df_cleaned = clean_data(df, method=cleaning_method_map[cleaning_method])
         
@@ -187,15 +207,38 @@ if uploaded_file:
                 )
                 st.plotly_chart(fig, use_container_width=True)
             
+            # Scatter Plot Option
+            if st.checkbox("Show Scatter Plot"):
+                x_col = st.selectbox("Select X-axis column", numeric_columns)
+                y_col = st.selectbox("Select Y-axis column", numeric_columns, index=1)
+                fig = px.scatter(
+                    df_cleaned, 
+                    x=x_col, 
+                    y=y_col, 
+                    title=f"Scatter Plot: {x_col} vs {y_col}", 
+                    template="plotly_dark", 
+                    color_discrete_sequence=["#FF4B2B"]
+                )
+                st.plotly_chart(fig, use_container_width=True)
+            
+            # Outlier Detection
+            if st.checkbox("Detect Outliers"):
+                outliers = detect_outliers(df_cleaned, selected_column)
+                st.write(f"Outliers in {selected_column}:")
+                if not outliers.empty:
+                    st.write(outliers)
+                else:
+                    st.write("No outliers detected.")
+            
+            # Quartile Comparison
             st.subheader("📊 Q1, Q2, Q3 Comparison - Understanding quartiles")
             q1, q2, q3 = df_cleaned[selected_column].quantile([0.25, 0.5, 0.75])
-            
             fig = go.Figure()
             fig.add_trace(go.Bar(
                 x=["Q1", "Q2 (Median)", "Q3"], 
                 y=[q1, q2, q3], 
                 marker_color=["#FF4B2B", "#FFD700", "#00C9A7"], 
-                text=[q1, q2, q3], 
+                text=[f"{q1:.2f}", f"{q2:.2f}", f"{q3:.2f}"], 
                 textposition="auto"
             ))
             fig.update_layout(
@@ -203,6 +246,13 @@ if uploaded_file:
                 template="plotly_dark"
             )
             st.plotly_chart(fig, use_container_width=True)
+        
+        # AI Integration Placeholder
+        with st.expander("🤖 Ask Grok - AI Insights"):
+            question = st.text_input("Ask a question about your data (e.g., 'What’s the trend in this column?')")
+            if question:
+                st.write("Grok’s response: [Placeholder - Imagine I’m analyzing your data here!]")
+                # In a real integration, I’d process the question and df_cleaned here.
         
         # Download cleaned data
         export_format = st.selectbox("📤 Select export format", ["CSV", "Excel"])
