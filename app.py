@@ -9,16 +9,25 @@ from io import BytesIO
 st.set_page_config(page_title="📊 Financial Data Sweeper", layout="wide")
 st.title("🚀 Financial Data Sweeper")
 
-# Custom Modern Styling
+# Custom Modern Styling with Animations
 st.markdown(
     """
     <style>
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes pop {
+            0% { transform: scale(0.9); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
         body { font-family: 'Inter', sans-serif; }
-        .stApp { background-color: #121212; color: #EAEAEA; }
-        .css-18e3th9 { background-color: #1E1E1E; padding: 20px; border-radius: 12px; box-shadow: 4px 4px 15px rgba(0,0,0,0.2); }
-        .stButton>button { background: linear-gradient(to right, #ff416c, #ff4b2b); color: white; border-radius: 8px; padding: 12px; font-size: 16px; transition: 0.3s ease-in-out; }
-        .stButton>button:hover { background: linear-gradient(to right, #ff4b2b, #ff416c); transform: scale(1.05); }
-        .stSidebar { background-color: #1A1A1A; padding: 20px; border-radius: 12px; box-shadow: 2px 2px 12px rgba(255,255,255,0.1); }
+        .stApp { background-color: #f0f2f6; color: #000000; }
+        .css-18e3th9 { background-color: #ffffff; padding: 20px; border-radius: 12px; box-shadow: 4px 4px 15px rgba(0,0,0,0.2); animation: fadeIn 1s ease-in-out; }
+        .stButton>button { background: linear-gradient(to right, #ff416c, #ff4b2b); color: white; border-radius: 8px; padding: 12px; font-size: 16px; transition: 0.3s ease-in-out; animation: pop 0.5s ease-in-out; }
+        .stButton>button:hover { background: linear-gradient(to right, #ff4b2b, #ff416c); transform: scale(1.1); }
+        .stSidebar { background-color: #ffffff; padding: 20px; border-radius: 12px; box-shadow: 2px 2px 12px rgba(0,0,0,0.1); animation: fadeIn 1s ease-in-out; }
         .stAlert { font-size: 18px; font-weight: bold; }
     </style>
     """,
@@ -66,27 +75,27 @@ if uploaded_file:
             col1, col2, col3 = st.columns(3)
             
             with col1:
-                fig = px.histogram(df_cleaned, x=selected_column, nbins=40, title=f"📊 {selected_column} Distribution", template="plotly_dark", color_discrete_sequence=["#FF4B2B"])
+                fig = px.histogram(df_cleaned, x=selected_column, nbins=40, title=f"📊 {selected_column} Distribution", template="plotly_white", color_discrete_sequence=["#FF4B2B"])
                 fig.update_layout(bargap=0.1)
                 st.plotly_chart(fig, use_container_width=True)
             
             with col2:
-                fig = px.box(df_cleaned, y=selected_column, title=f"📦 {selected_column} Boxplot", template="plotly_dark", color_discrete_sequence=["#FF4B2B"])
+                fig = px.box(df_cleaned, y=selected_column, title=f"📦 {selected_column} Boxplot", template="plotly_white", color_discrete_sequence=["#FF4B2B"])
                 st.plotly_chart(fig, use_container_width=True)
             
             with col3:
-                fig = px.line(df_cleaned, y=selected_column, title=f"📈 {selected_column} Trend Line", template="plotly_dark", markers=True, color_discrete_sequence=["#00C9A7"])
+                fig = px.line(df_cleaned, y=selected_column, title=f"📈 {selected_column} Trend Line", template="plotly_white", markers=True, color_discrete_sequence=["#00C9A7"])
                 st.plotly_chart(fig, use_container_width=True)
             
             st.subheader("📊 More Charts")
             
             col4, col5 = st.columns(2)
             with col4:
-                fig = px.scatter(df_cleaned, x=selected_column, y=df_cleaned[numeric_columns[0]], title=f"📌 Scatter Plot: {selected_column} vs {numeric_columns[0]}", template="plotly_dark", color_discrete_sequence=["#FFD700"])
+                fig = px.scatter(df_cleaned, x=selected_column, y=df_cleaned[numeric_columns[0]], title=f"📌 Scatter Plot: {selected_column} vs {numeric_columns[0]}", template="plotly_white", color_discrete_sequence=["#FFD700"])
                 st.plotly_chart(fig, use_container_width=True)
             
             with col5:
-                fig = px.bar(df_cleaned, x=selected_column, y=df_cleaned[numeric_columns[0]], title=f"📊 Bar Chart: {selected_column} vs {numeric_columns[0]}", template="plotly_dark", color_discrete_sequence=["#FF4500"])
+                fig = px.bar(df_cleaned, x=selected_column, y=df_cleaned[numeric_columns[0]], title=f"📊 Bar Chart: {selected_column} vs {numeric_columns[0]}", template="plotly_white", color_discrete_sequence=["#FF4500"])
                 st.plotly_chart(fig, use_container_width=True)
         
         # Download cleaned data
