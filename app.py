@@ -87,16 +87,15 @@ if uploaded_file:
                 fig = px.line(df_cleaned, y=selected_column, title=f"📈 {selected_column} Trend Line", template="plotly_white", markers=True, color_discrete_sequence=["#00C9A7"])
                 st.plotly_chart(fig, use_container_width=True)
             
-            st.subheader("📊 More Charts")
+            st.subheader("📊 Q1, Q2, Q3 Comparison")
+            q1 = df_cleaned[selected_column].quantile(0.25)
+            q2 = df_cleaned[selected_column].median()
+            q3 = df_cleaned[selected_column].quantile(0.75)
             
-            col4, col5 = st.columns(2)
-            with col4:
-                fig = px.scatter(df_cleaned, x=selected_column, y=df_cleaned[numeric_columns[0]], title=f"📌 Scatter Plot: {selected_column} vs {numeric_columns[0]}", template="plotly_white", color_discrete_sequence=["#FFD700"])
-                st.plotly_chart(fig, use_container_width=True)
-            
-            with col5:
-                fig = px.bar(df_cleaned, x=selected_column, y=df_cleaned[numeric_columns[0]], title=f"📊 Bar Chart: {selected_column} vs {numeric_columns[0]}", template="plotly_white", color_discrete_sequence=["#FF4500"])
-                st.plotly_chart(fig, use_container_width=True)
+            fig = go.Figure()
+            fig.add_trace(go.Bar(x=["Q1", "Q2 (Median)", "Q3"], y=[q1, q2, q3], marker_color=["#FF4B2B", "#FFD700", "#00C9A7"], text=[q1, q2, q3], textposition="auto"))
+            fig.update_layout(title=f"📊 Q1, Q2, Q3 Comparison for {selected_column}", template="plotly_white")
+            st.plotly_chart(fig, use_container_width=True)
         
         # Download cleaned data
         @st.cache_data
