@@ -9,7 +9,7 @@ from io import BytesIO
 st.set_page_config(page_title="📊 Financial Data Sweeper", layout="wide")
 st.title("🚀 Financial Data Sweeper")
 
-# Custom Styling
+# Custom Styling for enhanced UI/UX
 st.markdown(
     """
     <style>
@@ -40,16 +40,19 @@ if uploaded_file:
 else:
     st.sidebar.info("Awaiting file upload...")
 
-# Function to load data
+# Function to load data from file
 def load_data(file):
+    """Load data from uploaded CSV or Excel file."""
     return pd.read_csv(file) if file.name.endswith(".csv") else pd.read_excel(file)
 
 # Function to clean data
 def clean_data(df):
+    """Remove missing values and duplicate records from the dataframe."""
     return df.dropna().drop_duplicates()
 
-# Function to convert dataframe to CSV
+# Function to convert dataframe to downloadable CSV format
 def convert_df(df):
+    """Convert dataframe to CSV format for downloading."""
     output = BytesIO()
     df.to_csv(output, index=False)
     return output.getvalue()
@@ -57,23 +60,24 @@ def convert_df(df):
 if uploaded_file:
     try:
         with st.spinner("Processing file..."):
-            df = load_data(uploaded_file)
+            df = load_data(uploaded_file)  # Load data
             time.sleep(1)
         
         st.success("🎉 File successfully uploaded!")
         
         # Display raw data
-        st.subheader("📜 Raw Data")
+        st.subheader("📜 Raw Data - Original dataset preview")
         st.dataframe(df, use_container_width=True, height=350)
         
-        # Data Cleaning
+        # Clean data by removing NaN and duplicate values
         df_cleaned = clean_data(df)
         
-        st.subheader("✨ Cleaned Data")
+        st.subheader("✨ Cleaned Data - Processed for accuracy")
         st.dataframe(df_cleaned, use_container_width=True, height=350)
         
         # Summary statistics
         with st.expander("📊 Data Summary - Click to Expand"):
+            st.write("Statistical insights of the dataset:")
             st.write(df_cleaned.describe())
         
         # Data Visualization
@@ -97,7 +101,7 @@ if uploaded_file:
                 fig = px.line(df_cleaned, y=selected_column, title=f"📈 {selected_column} Trend Line", template="plotly_white", markers=True, color_discrete_sequence=["#00C9A7"])
                 st.plotly_chart(fig, use_container_width=True)
             
-            st.subheader("📊 Q1, Q2, Q3 Comparison")
+            st.subheader("📊 Q1, Q2, Q3 Comparison - Understanding quartiles")
             q1, q2, q3 = df_cleaned[selected_column].quantile([0.25, 0.5, 0.75])
             
             fig = go.Figure()
@@ -112,7 +116,7 @@ if uploaded_file:
             data=csv,
             file_name="cleaned_data.csv",
             mime="text/csv",
-            help="Download the cleaned CSV file"
+            help="Download the cleaned CSV file for further analysis."
         )
         
     except Exception as e:
