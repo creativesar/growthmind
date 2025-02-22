@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
+import plotly.express as px
+import plotly.graph_objects as go
 from io import BytesIO
 import time
 
@@ -56,20 +56,18 @@ if uploaded_file:
         # Data Visualization
         numeric_columns = df_cleaned.select_dtypes(include=['number']).columns
         if not numeric_columns.empty:
-            st.subheader("📈 Data Visualizations")
+            st.subheader("📈 Interactive Data Visualizations")
             selected_column = st.selectbox("Select a column to visualize", numeric_columns)
             
-            # Histogram
-            fig, ax = plt.subplots()
-            sns.histplot(df_cleaned[selected_column], bins=20, kde=True, ax=ax)
-            ax.set_title(f"Distribution of {selected_column}")
-            st.pyplot(fig)
+            # Modern Histogram
+            fig = px.histogram(df_cleaned, x=selected_column, nbins=30, title=f"📊 Distribution of {selected_column}", template="plotly_dark")
+            fig.update_layout(bargap=0.1, xaxis_title=selected_column, yaxis_title="Count")
+            st.plotly_chart(fig, use_container_width=True)
             
-            # Boxplot
-            fig, ax = plt.subplots()
-            sns.boxplot(y=df_cleaned[selected_column], ax=ax)
-            ax.set_title(f"Boxplot of {selected_column}")
-            st.pyplot(fig)
+            # Modern Boxplot
+            fig = px.box(df_cleaned, y=selected_column, title=f"📦 Boxplot of {selected_column}", template="plotly_dark")
+            fig.update_layout(yaxis_title=selected_column)
+            st.plotly_chart(fig, use_container_width=True)
         
         # Download cleaned data with success message
         @st.cache_data
