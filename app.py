@@ -7,108 +7,102 @@ import numpy as np
 import time
 
 # Streamlit app configuration
-st.set_page_config(page_title="✨ Cosmic Financial Portal", layout="wide", page_icon="🌠")
-st.title("🌌 Cosmic Financial Portal V4.0")
+st.set_page_config(page_title="🌌 Financial Data Sweeper", layout="wide", page_icon="🚀")
+st.title("🌠 Financial Data Sweeper V4.0")
 
-# Out-of-this-World Light Theme Styling
+# Enhanced Light Theme Styling with a refined cosmic twist
 st.markdown(
     """
     <style>
-        @keyframes cosmicPulse {
-            0% { transform: scale(1); opacity: 0.8; }
-            50% { transform: scale(1.1); opacity: 1; }
-            100% { transform: scale(1); opacity: 0.8; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        @keyframes orbit {
-            0% { transform: rotate(0deg) translateX(10px) rotate(0deg); }
-            100% { transform: rotate(360deg) translateX(10px) rotate(-360deg); }
+        @keyframes glow {
+            0% { box-shadow: 0 0 5px #a1c4fd, 0 0 10px #c3e0ff; }
+            50% { box-shadow: 0 0 15px #a1c4fd, 0 0 20px #c3e0ff; }
+            100% { box-shadow: 0 0 5px #a1c4fd, 0 0 10px #c3e0ff; }
         }
-        @keyframes supernova {
-            0% { box-shadow: 0 0 5px #ffd700, 0 0 15px #ff80bf; }
-            50% { box-shadow: 0 0 20px #ffd700, 0 0 30px #ff80bf; }
-            100% { box-shadow: 0 0 5px #ffd700, 0 0 15px #ff80bf; }
+        @keyframes float {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0); }
         }
-        @keyframes starFade {
-            0% { opacity: 0; transform: translateY(50px); }
-            100% { opacity: 1; transform: translateY(0); }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
         }
-        body { font-family: 'Exo 2', sans-serif; }
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        body { font-family: 'Poppins', sans-serif; }
         .stApp { 
-            background: linear-gradient(135deg, #f5faff, #e0f0ff, #fef8e6); 
-            color: #1e1e4a; 
-            animation: starFade 1.5s ease-in-out; 
-            position: relative; 
-            overflow: hidden; 
-        }
-        .stApp::before {
-            content: '✨';
-            position: absolute;
-            font-size: 4rem;
-            color: rgba(255, 215, 0, 0.3);
-            top: 20px;
-            left: 20px;
-            animation: orbit 8s infinite linear;
-        }
-        .stApp::after {
-            content: '🌠';
-            position: absolute;
-            font-size: 3rem;
-            color: rgba(255, 128, 191, 0.3);
-            bottom: 20px;
-            right: 20px;
-            animation: orbit 10s infinite linear reverse;
+            background: linear-gradient(135deg, #eef2ff, #dbe9ff, #f5faff); 
+            color: #1e2a44; 
+            animation: fadeIn 1s ease-in-out; 
         }
         .stButton>button { 
-            background: linear-gradient(90deg, #ffd700, #ff80bf, #80dfff); 
-            color: #1e1e4a; 
-            border-radius: 25px; 
-            padding: 15px 40px; 
-            font-size: 18px; 
-            font-weight: bold;
-            transition: all 0.5s ease; 
-            animation: supernova 3s infinite; 
+            background: linear-gradient(45deg, #a1c4fd, #c3e0ff); 
+            color: #1e2a44; 
+            border-radius: 12px; 
+            padding: 10px 25px; 
+            font-size: 16px; 
+            font-weight: 600; 
+            transition: all 0.3s ease; 
+            animation: pulse 2s infinite; 
             border: none;
-            text-transform: uppercase;
+            box-shadow: 0 2px 8px rgba(161, 196, 253, 0.4);
         }
         .stButton>button:hover { 
-            transform: scale(1.2) translateY(-5px); 
-            background: linear-gradient(90deg, #80dfff, #ff80bf, #ffd700); 
+            transform: scale(1.08); 
+            background: linear-gradient(45deg, #c3e0ff, #a1c4fd); 
+            box-shadow: 0 4px 12px rgba(161, 196, 253, 0.6);
         }
         .stSidebar { 
-            background: linear-gradient(180deg, rgba(255, 250, 240, 0.9), rgba(224, 240, 255, 0.9)); 
-            backdrop-filter: blur(10px); 
-            padding: 30px; 
-            border-radius: 20px; 
-            box-shadow: 0 5px 25px rgba(0,0,0,0.05); 
-            border: 1px solid rgba(255, 215, 0, 0.3);
-        }
-        .stHeader { color: #ff80bf; font-size: 3.5rem; font-weight: 900; animation: cosmicPulse 2s infinite; }
-        .stDataFrame { 
             background: rgba(255, 255, 255, 0.95); 
-            border-radius: 20px; 
+            backdrop-filter: blur(12px); 
             padding: 20px; 
-            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.2); 
-            border: 1px dashed #80dfff;
+            border-radius: 12px; 
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05); 
+            animation: fadeIn 1s ease-in-out; 
+        }
+        .stHeader { 
+            color: #a1c4fd; 
+            font-size: 2.5rem; 
+            font-weight: 700; 
+            animation: float 3s infinite; 
+            text-shadow: 0 2px 4px rgba(161, 196, 253, 0.3);
+        }
+        .stSubheader { 
+            color: #3b5998; 
+            font-weight: 600; 
+            margin-top: 20px; 
+        }
+        .stDataFrame { 
+            background: rgba(255, 255, 255, 0.98); 
+            border-radius: 12px; 
+            padding: 10px; 
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03); 
         }
         .stExpander { 
-            background: rgba(255, 255, 255, 0.95); 
-            border-radius: 20px; 
-            box-shadow: 0 5px 15px rgba(255, 128, 191, 0.2); 
-            border: 1px dashed #ffd700;
+            background: rgba(255, 255, 255, 0.98); 
+            border-radius: 12px; 
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03); 
+            padding: 10px; 
         }
         .feedback-box { 
-            background: linear-gradient(45deg, rgba(255, 215, 0, 0.2), rgba(128, 223, 255, 0.2)); 
-            border-radius: 20px; 
-            padding: 25px; 
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5); 
-            border: 2px solid #ff80bf;
+            background: rgba(195, 224, 255, 0.15); 
+            border-radius: 12px; 
+            padding: 15px; 
+            box-shadow: 0 2px 10px rgba(161, 196, 253, 0.2); 
         }
-        .cosmic-title { 
-            text-align: center; 
-            font-size: 2.5rem; 
-            color: #ffd700; 
-            text-shadow: 0 0 10px #ff80bf; 
-            margin-bottom: 20px; 
+        .stSelectbox, .stTextInput, .stTextArea { 
+            background: rgba(255, 255, 255, 0.9); 
+            border-radius: 8px; 
+            padding: 8px; 
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.02);
         }
     </style>
     """,
@@ -116,17 +110,17 @@ st.markdown(
 )
 
 # Sidebar
-st.sidebar.header("🌠 Dimensional Gateway")
+st.sidebar.header("🌌 Data Nexus")
 uploaded_file = st.sidebar.file_uploader(
-    "Teleport your data (CSV/Excel)", 
+    "Upload your cosmic data (CSV/Excel)", 
     type=["csv", "xlsx"], 
-    help="Supports CSV and Excel transmissions"
+    help="Supports CSV and Excel data streams"
 )
 
 if uploaded_file:
-    st.sidebar.success("🌟 Data vortex activated!")
+    st.sidebar.success("🌠 Data stream online!")
 else:
-    st.sidebar.info("🌀 Awaiting dimensional data...")
+    st.sidebar.info("🌀 Awaiting cosmic data...")
 
 # Cached data loading
 @st.cache_data
@@ -175,155 +169,158 @@ def convert_df(df, format="csv"):
 
 if uploaded_file:
     try:
-        # Cosmic loading animation
+        # Loading animation
         progress_bar = st.progress(0)
-        with st.spinner("🌌 Warping through hyperspace..."):
+        with st.spinner("🌌 Engaging hyperdrive..."):
             df = load_data(uploaded_file)
             for i in range(100):
                 progress_bar.progress(i + 1)
-                time.sleep(0.008)  # Faster for a snappier feel
+                time.sleep(0.01)
             progress_bar.empty()
         
-        st.success("✨ Portal stabilized!")
+        st.success("✨ Data hyperspace jump complete!")
         
         # Raw data display
-        st.markdown("<h2 class='cosmic-title'>📡 Raw Data Nebula</h2>", unsafe_allow_html=True)
-        st.dataframe(df.style.applymap(lambda x: "background-color: rgba(255, 245, 230, 0.6);"), use_container_width=True, height=400)
+        st.subheader("📜 Cosmic Raw Data")
+        st.dataframe(df.style.applymap(lambda x: "background-color: rgba(245, 250, 255, 0.7);"), use_container_width=True, height=400)
         
         # Data cleaning
-        cleaning_method = st.selectbox("🧪 Quantum Purification Matrix", ["Void Collapse", "Astral Mean", "Nebula Median", "Zero Gravity"])
+        cleaning_method = st.selectbox("🧠 Data Flux Purification", ["Purge Anomalies", "Mean Convergence", "Median Stabilization", "Zero Flux"])
         cleaning_method_map = {
-            "Void Collapse": "drop",
-            "Astral Mean": "mean",
-            "Nebula Median": "median",
-            "Zero Gravity": "zero"
+            "Purge Anomalies": "drop",
+            "Mean Convergence": "mean",
+            "Median Stabilization": "median",
+            "Zero Flux": "zero"
         }
         df_cleaned = clean_data(df, method=cleaning_method_map[cleaning_method])
         
-        st.markdown("<h2 class='cosmic-title'>🌟 Stabilized Data Constellation</h2>", unsafe_allow_html=True)
-        st.dataframe(df_cleaned.style.applymap(lambda x: "background-color: rgba(255, 245, 230, 0.6);"), use_container_width=True, height=400)
+        st.subheader("✨ Stabilized Data Core")
+        st.dataframe(df_cleaned.style.applymap(lambda x: "background-color: rgba(245, 250, 255, 0.7);"), use_container_width=True, height=400)
         
         # Summary stats
-        with st.expander("📊 Galactic Data Codex"):
-            st.write("Decoding cosmic metrics:")
-            st.write(df_cleaned.describe().style.background_gradient(cmap="YlOrRd"))
+        with st.expander("📊 Quantum Data Insights", expanded=False):
+            st.write("Analyzing data dimensions:")
+            st.write(df_cleaned.describe().style.background_gradient(cmap="Blues"))
         
         # Correlation heatmap
         numeric_columns = df_cleaned.select_dtypes(include=['number']).columns
         if not numeric_columns.empty:
-            st.markdown("<h2 class='cosmic-title'>🌈 Celestial Correlation Grid</h2>", unsafe_allow_html=True)
+            st.subheader("🔥 Interstellar Correlation Map")
             corr_matrix = df_cleaned[numeric_columns].corr()
-            fig = px.imshow(corr_matrix, text_auto=True, title="Correlation Grid", template="plotly_white", color_continuous_scale="YlOrRd")
-            fig.update_layout(hovermode="x unified", margin=dict(t=50, b=50, l=50, r=50))
+            fig = px.imshow(corr_matrix, text_auto=True, title="Correlation Map", template="plotly_white", color_continuous_scale="Blues")
+            fig.update_layout(hovermode="x unified", font=dict(color="#1e2a44"))
             st.plotly_chart(fig, use_container_width=True)
         
         # Visualizations
         if not numeric_columns.empty:
-            st.markdown("<h2 class='cosmic-title'>🌌 Interdimensional Visuals</h2>", unsafe_allow_html=True)
-            selected_column = st.selectbox("Select cosmic vector", numeric_columns)
+            st.subheader("🌌 Galactic Visualizations")
+            selected_column = st.selectbox("Select data singularity", numeric_columns)
             
             col1, col2, col3 = st.columns(3)
             
             with col1:
                 fig = px.histogram(
-                    df_cleaned, x=selected_column, nbins=50, title=f"🌠 {selected_column} Starfield", 
-                    template="plotly_white", color_discrete_sequence=["#ff80bf"]
+                    df_cleaned, x=selected_column, nbins=50, title=f"📊 {selected_column} Nebula Histogram", 
+                    template="plotly_white", color_discrete_sequence=["#a1c4fd"]
                 )
-                fig.update_layout(bargap=0.2, hovermode="x unified")
+                fig.update_layout(bargap=0.1, hovermode="x unified", font=dict(color="#1e2a44"))
                 st.plotly_chart(fig, use_container_width=True)
             
             with col2:
                 fig = px.box(
-                    df_cleaned, y=selected_column, title=f"🪐 {selected_column} Gravity Well", 
-                    template="plotly_white", color_discrete_sequence=["#80dfff"]
+                    df_cleaned, y=selected_column, title=f"📦 {selected_column} Quantum Flux", 
+                    template="plotly_white", color_discrete_sequence=["#c3e0ff"]
                 )
+                fig.update_layout(font=dict(color="#1e2a44"))
                 st.plotly_chart(fig, use_container_width=True)
             
             with col3:
                 fig = px.line(
-                    df_cleaned, y=selected_column, title=f"✨ {selected_column} Lightwave", 
-                    template="plotly_white", markers=True, color_discrete_sequence=["#ffd700"]
+                    df_cleaned, y=selected_column, title=f"📈 {selected_column} Temporal Rift", 
+                    template="plotly_white", markers=True, color_discrete_sequence=["#ffcc99"]
                 )
+                fig.update_layout(font=dict(color="#1e2a44"))
                 st.plotly_chart(fig, use_container_width=True)
             
             # Scatter plot
-            if st.checkbox("Activate Warp Field"):
-                x_col = st.selectbox("X-axis vector", numeric_columns)
-                y_col = st.selectbox("Y-axis vector", numeric_columns, index=1)
+            if st.checkbox("Engage Scatter Warp"):
+                x_col = st.selectbox("X-axis singularity", numeric_columns)
+                y_col = st.selectbox("Y-axis singularity", numeric_columns, index=1)
                 fig = px.scatter(
-                    df_cleaned, x=x_col, y=y_col, title=f"🌌 Warp: {x_col} vs {y_col}", 
-                    template="plotly_white", color_discrete_sequence=["#ffd700"], 
+                    df_cleaned, x=x_col, y=y_col, title=f"Warp Field: {x_col} vs {y_col}", 
+                    template="plotly_white", color_discrete_sequence=["#c3e0ff"], 
                     animation_frame=None if 'Date' not in df_cleaned.columns else 'Date'
                 )
+                fig.update_layout(font=dict(color="#1e2a44"))
                 st.plotly_chart(fig, use_container_width=True)
             
             # Outlier detection
-            if st.checkbox("Scan for Cosmic Aberrations"):
+            if st.checkbox("Probe for Cosmic Anomalies"):
                 outliers = detect_outliers(df_cleaned, selected_column)
-                st.write(f"Aberrations in {selected_column}:")
+                st.write(f"Anomalies in {selected_column}:")
                 if not outliers.empty:
                     st.write(outliers)
                 else:
-                    st.write("No aberrations detected in this vector.")
+                    st.write("No anomalies detected in this singularity.")
             
             # Quartile visualization
-            st.markdown("<h2 class='cosmic-title'>🌟 Quantum Quartile Nexus</h2>", unsafe_allow_html=True)
+            st.subheader("📊 Stellar Quartile Array")
             q1, q2, q3 = df_cleaned[selected_column].quantile([0.25, 0.5, 0.75])
             fig = go.Figure()
             fig.add_trace(go.Bar(
                 x=["Q1", "Q2 (Core)", "Q3"], y=[q1, q2, q3], 
-                marker_color=["#ff80bf", "#ffd700", "#80dfff"], 
+                marker_color=["#a1c4fd", "#ffcc99", "#c3e0ff"], 
                 text=[f"{q1:.2f}", f"{q2:.2f}", f"{q3:.2f}"], textposition="auto"
             ))
-            fig.update_layout(title=f"Quartile Nexus for {selected_column}", template="plotly_white")
+            fig.update_layout(title=f"Quartile Array for {selected_column}", template="plotly_white", font=dict(color="#1e2a44"))
             st.plotly_chart(fig, use_container_width=True)
         
         # AI Integration
-        with st.expander("🤖 Neural Star Core"):
-            question = st.text_input("Ask the cosmic oracle (e.g., 'What’s the flux in this vector?')")
+        with st.expander("🤖 AI Core", expanded=False):
+            question = st.text_input("Query the neural core (e.g., 'What’s the trend in this singularity?')")
             if question:
-                with st.spinner("🤖 Accessing star core..."):
+                with st.spinner("🤖 Neural net engaging..."):
                     time.sleep(1)
-                st.write(f"🌠 Oracle Response (Feb 24, 2025): Decoding '{question}'. For {selected_column}, the lightwave indicates a [rising/falling/stable] flux based on interdimensional shifts.")
+                trend = "rising" if df_cleaned[selected_column].iloc[-1] > df_cleaned[selected_column].iloc[0] else "falling" if df_cleaned[selected_column].iloc[-1] < df_cleaned[selected_column].iloc[0] else "stable"
+                st.write(f"🧠 Response (Feb 24, 2025): Analyzing '{question}'. For {selected_column}, the temporal rift suggests a {trend} trend based on recent data shifts.")
         
         # Download section
-        export_format = st.selectbox("📡 Data Teleport Protocol", ["CSV", "Excel"])
+        export_format = st.selectbox("📤 Data Extraction Protocol", ["CSV", "Excel"])
         export_data = convert_df(df_cleaned, format=export_format.lower())
         st.download_button(
-            label=f"🌌 Teleport Data ({export_format})",
+            label=f"📥 Extract Data ({export_format})",
             data=export_data,
-            file_name=f"cosmic_data_{export_format.lower()}.{export_format.lower()}",
+            file_name=f"stabilized_data_{export_format.lower()}.{export_format.lower()}",
             mime="text/csv" if export_format == "CSV" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            help="Teleport stabilized data across dimensions."
+            help="Extract stabilized data for intergalactic analysis."
         )
 
         # Feedback Section
-        st.markdown("<h2 class='cosmic-title'>🌠 Intergalactic Feedback</h2>", unsafe_allow_html=True)
+        st.subheader("🌠 Feedback Cosmos")
         st.markdown("<div class='feedback-box'>", unsafe_allow_html=True)
         with st.form(key="feedback_form"):
-            st.write("Rate this cosmic voyage:")
-            feedback_rating = st.slider("Star Rating (1-5)", 1, 5, 3, format="%d 🌟")
-            feedback_text = st.text_area("Send a cosmic signal", height=120, placeholder="How can we amplify this portal?")
-            submit_feedback = st.form_submit_button(label="Transmit to the Cosmos")
+            st.write("Rate this cosmic experience:")
+            feedback_rating = st.slider("Stellar Rating (1-5)", 1, 5, 3, format="%d ⭐")
+            feedback_text = st.text_area("Transmit your cosmic thoughts", height=120, placeholder="Tell us how we can enhance this galaxy!")
+            submit_feedback = st.form_submit_button(label="Send Across the Universe")
             if submit_feedback:
-                st.success(f"🌌 Signal received! Rating: {feedback_rating}/5 🌟\nMessage: {feedback_text}")
+                st.success(f"🌌 Feedback beamed! Rating: {feedback_rating}/5 ⭐\nMessage: {feedback_text}")
                 st.balloons()
         st.markdown("</div>", unsafe_allow_html=True)
         
     except Exception as e:
-        st.error(f"❌ Dimensional rift detected: {e}")
+        st.error(f"❌ Hyperdrive malfunction: {e}")
 else:
-    st.sidebar.warning("⚠ Open the data gateway to begin the voyage.")
+    st.sidebar.warning("⚠ Engage data upload to activate the cosmos.")
 
-# Cosmic Footer
+# Footer
 st.markdown(
     """
-    <div style="text-align: center; padding: 40px; background: linear-gradient(45deg, rgba(255, 245, 230, 0.9), rgba(224, 240, 255, 0.9)); border-radius: 20px; margin-top: 40px; box-shadow: 0 5px 25px rgba(255, 215, 0, 0.2);">
-        <h3 style="color: #ff80bf; animation: cosmicPulse 2s infinite; font-size: 2.5rem;">Crafted by Sarfraz</h3>
-        <p style="color: #1e1e4a; font-size: 1.3rem;">Explorer of the Financial Cosmos</p>
-        <div style="margin-top: 15px;">
-            <span style="font-size: 2rem; animation: orbit 12s infinite linear;">🌍</span>
-            <span style="font-size: 1.5rem; animation: orbit 8s infinite linear reverse;">✨</span>
+    <div style="text-align: center; padding: 25px; background: rgba(255, 255, 255, 0.95); border-radius: 12px; margin-top: 25px; box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);">
+        <h3 style="color: #a1c4fd; animation: float 3s infinite; font-size: 1.8rem; font-weight: 600;">Developed by Sarfraz</h3>
+        <p style="color: #1e2a44; font-size: 1rem;">Navigating the financial multiverse</p>
+        <div style="margin-top: 8px;">
+            <span style="font-size: 1.2rem; animation: rotate 12s linear infinite;">🪐</span>
         </div>
     </div>
     """,
