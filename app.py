@@ -96,7 +96,7 @@ uploaded_file = st.sidebar.file_uploader(
     help="Supports CSV and Excel data streams"
 )
 st.sidebar.markdown("<span style='color: red;'>🪐 Theme Realm</span>", unsafe_allow_html=True)
-theme = st.sidebar.radio("", ["Nebula Dark", "Stellar Light"], format_func=lambda x: f"<span style='color: red;'>{x}</span>", unsafe_allow_html=True)
+theme = st.sidebar.radio("", ["Nebula Dark", "Stellar Light"])  # Removed unsafe_allow_html and format_func
 
 if theme == "Stellar Light":
     st.markdown("""
@@ -295,7 +295,8 @@ if uploaded_file:
                 1, 5, 3, 
                 format="%d ⭐", 
                 key="rating_slider", 
-                help="Rate from <span style='color: red;'>1 ⭐</span> to <span style='color: red;'>5 ⭐</span>"
+                help="Rate from <span style='color: red;'>1 ⭐</span> to <span style='color: red;'>5 ⭐</span>",
+                disabled=False  # Ensure slider is interactive
             )
             st.markdown("<span style='color: red;'>Transmit your cosmic thoughts</span>", unsafe_allow_html=True)
             feedback_text = st.text_area("", height=150, placeholder="Tell us how we can enhance this galaxy!")
