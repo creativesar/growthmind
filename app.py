@@ -95,12 +95,13 @@ uploaded_file = st.sidebar.file_uploader(
     type=["csv", "xlsx"], 
     help="Supports CSV and Excel data streams"
 )
-theme = st.sidebar.radio("🪐 Theme Realm", ["Nebula Dark", "Stellar Light"])
+st.sidebar.markdown("<span style='color: red;'>🪐 Theme Realm</span>", unsafe_allow_html=True)
+theme = st.sidebar.radio("", ["Nebula Dark", "Stellar Light"], format_func=lambda x: f"<span style='color: red;'>{x}</span>", unsafe_allow_html=True)
 
 if theme == "Stellar Light":
     st.markdown("""
         <style>
-            .stApp { background: linear-gradient(135deg, #e6f0ff, #cce5ff); color: #0d0620; }
+            .stApp { background: linear-gradient(135deg, #e6f0ff, #cce5ff); color: #e24d4d; }
             .stHeader { color: #ff00ff; }
         </style>
     """, unsafe_allow_html=True)
@@ -108,7 +109,7 @@ if theme == "Stellar Light":
 if uploaded_file:
     st.sidebar.success("🌠 Data stream online!")
 else:
-    st.sidebar.info("🌀 Awaiting cosmic data...")
+    st.sidebar.info("<span style='color: red;'>🌀 Awaiting cosmic data...</span>", unsafe_allow_html=True)
 
 # Cached data loading
 @st.cache_data
@@ -166,14 +167,15 @@ if uploaded_file:
                 time.sleep(0.01)  # Smoother animation
             progress_bar.empty()
         
-        st.success("✨ Data hyperspace jump complete!")
+        st.success("<span style='color: red;'>✨ Data hyperspace jump complete!</span>", unsafe_allow_html=True)
         
         # Raw data display
         st.subheader("📜 Cosmic Raw Data")
         st.dataframe(df.style.applymap(lambda x: "background-color: rgba(255, 255, 255, 0.1);"), use_container_width=True, height=450)
         
         # Data cleaning
-        cleaning_method = st.selectbox("🧠 Data Flux Purification", ["Purge Anomalies", "Mean Convergence", "Median Stabilization", "Zero Flux"])
+        st.markdown("<span style='color: red;'>🧠 Data Flux Purification</span>", unsafe_allow_html=True)
+        cleaning_method = st.selectbox("", ["Purge Anomalies", "Mean Convergence", "Median Stabilization", "Zero Flux"])
         cleaning_method_map = {
             "Purge Anomalies": "drop",
             "Mean Convergence": "mean",
@@ -202,7 +204,8 @@ if uploaded_file:
         # Visualizations
         if not numeric_columns.empty:
             st.subheader("🌌 Galactic Visualizations")
-            selected_column = st.selectbox("Select data singularity", numeric_columns)
+            st.markdown("<span style='color: red;'>Select data singularity</span>", unsafe_allow_html=True)
+            selected_column = st.selectbox("", numeric_columns)
             
             col1, col2, col3 = st.columns(3)
             
@@ -229,7 +232,8 @@ if uploaded_file:
                 st.plotly_chart(fig, use_container_width=True)
             
             # Scatter plot with animation
-            if st.checkbox("Engage Scatter Warp"):
+            st.markdown("<span style='color: red;'>Engage Scatter Warp</span>", unsafe_allow_html=True)
+            if st.checkbox(""):
                 x_col = st.selectbox("X-axis singularity", numeric_columns)
                 y_col = st.selectbox("Y-axis singularity", numeric_columns, index=1)
                 fig = px.scatter(
@@ -240,7 +244,8 @@ if uploaded_file:
                 st.plotly_chart(fig, use_container_width=True)
             
             # Outlier detection
-            if st.checkbox("Probe for Cosmic Anomalies"):
+            st.markdown("<span style='color: red;'>Probe for Cosmic Anomalies</span>", unsafe_allow_html=True)
+            if st.checkbox(""):
                 outliers = detect_outliers(df_cleaned, selected_column)
                 st.write(f"Anomalies in {selected_column}:")
                 if not outliers.empty:
@@ -266,10 +271,11 @@ if uploaded_file:
             if question:
                 with st.spinner("🤖 Neural net engaging..."):
                     time.sleep(1)  # Simulate processing
-                st.write(f"🧠 Response (Feb 22, 2025): Analyzing '{question}'. For {selected_column}, the temporal rift suggests a [rising/falling/stable] trend based on recent data shifts.")
+                st.write(f"🧠 Response (Feb 24, 2025): Analyzing '{question}'. For {selected_column}, the temporal rift suggests a [rising/falling/stable] trend based on recent data shifts.")
         
         # Download section
-        export_format = st.selectbox("📤 Data Extraction Protocol", ["CSV", "Excel"])
+        st.markdown("<span style='color: red;'>📤 Data Extraction Protocol</span>", unsafe_allow_html=True)
+        export_format = st.selectbox("", ["CSV", "Excel"])
         export_data = convert_df(df_cleaned, format=export_format.lower())
         st.download_button(
             label=f"📥 Extract Data ({export_format})",
@@ -283,9 +289,16 @@ if uploaded_file:
         st.subheader("🌠 Feedback Cosmos")
         st.markdown("<div class='feedback-box'>", unsafe_allow_html=True)
         with st.form(key="feedback_form"):
-            st.write("Rate this cosmic experience:")
-            feedback_rating = st.slider("Stellar Rating (1-5)", 1, 5, 3, format="%d ⭐")
-            feedback_text = st.text_area("Transmit your cosmic thoughts", height=150, placeholder="Tell us how we can enhance this galaxy!")
+            st.markdown("<span style='color: red;'>Rate this cosmic experience:</span>", unsafe_allow_html=True)
+            feedback_rating = st.slider(
+                "<span style='color: red;'>Stellar Rating (1-5)</span>", 
+                1, 5, 3, 
+                format="%d ⭐", 
+                key="rating_slider", 
+                help="Rate from <span style='color: red;'>1 ⭐</span> to <span style='color: red;'>5 ⭐</span>"
+            )
+            st.markdown("<span style='color: red;'>Transmit your cosmic thoughts</span>", unsafe_allow_html=True)
+            feedback_text = st.text_area("", height=150, placeholder="Tell us how we can enhance this galaxy!")
             submit_feedback = st.form_submit_button(label="Send Across the Universe")
             if submit_feedback:
                 st.success(f"🌌 Feedback beamed! Rating: {feedback_rating}/5 ⭐\nMessage: {feedback_text}")
@@ -295,14 +308,14 @@ if uploaded_file:
     except Exception as e:
         st.error(f"❌ Hyperdrive malfunction: {e}")
 else:
-    st.sidebar.warning("⚠ Engage data upload to activate the cosmos.")
+    st.sidebar.warning("<span style='color: red;'>⚠ Engage data upload to activate the cosmos.</span>", unsafe_allow_html=True)
 
 # Enhanced Futuristic Footer
 st.markdown(
     """
     <div style="text-align: center; padding: 40px; background: rgba(255, 255, 255, 0.03); border-radius: 20px; margin-top: 40px; box-shadow: 0 6px 25px rgba(0,0,0,0.3);">
-        <h3 style="color: #ffcc00; animation: float 3s infinite; font-size: 2.5rem;">Develped by Sarfraz</h3>
-        <p style="color: #d8e6ff; font-size: 1.3rem;">Navigating the financial multiverse</p>
+        <h3 style="color: #ffcc00; animation: float 3s infinite; font-size: 2.5rem;">Developed by Sarfraz</h3>
+        <p style="color: red; font-size: 1.3rem;">Navigating the financial multiverse</p>
         <div style="margin-top: 10px;">
             <span style="font-size: 1.5rem; animation: rotate 10s linear infinite;">🪐</span>
         </div>
